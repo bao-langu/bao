@@ -1,0 +1,8 @@
+# Local project folders
+.idea/
+cmake-build-debug/
+vcpkg/
+vcpkg_installed/
+
+# Source files
+*.bao
