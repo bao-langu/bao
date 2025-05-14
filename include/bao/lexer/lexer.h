@@ -4,6 +4,7 @@
 
 #ifndef LEXER_H
 #define LEXER_H
+#include <exception>
 #include <string>
 #include <vector>
 #include <unicode/unistr.h>
@@ -15,10 +16,11 @@ using std::vector;
 using std::exception;
 using icu::UnicodeString;
 using icu::StringCharacterIterator;
+using std::exception_ptr;
 
 namespace bao {
     class Lexer {
-        vector<exception> errors;
+        vector<exception_ptr> exceptions;
 
         UnicodeString source;
         StringCharacterIterator it;

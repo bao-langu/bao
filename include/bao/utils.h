@@ -5,6 +5,8 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <algorithm>
+#include <exception>
 #include <bao/lexer/token.h>
 #include <utility>
 #include <vector>
@@ -14,10 +16,13 @@
 #include <functional>
 #include <bao/parser/ast.h>
 #include <format>
+#include <sstream>
 
 namespace fs = std::filesystem;
 using std::exception;
+using std::exception_ptr;
 using std::vector;
+using std::ostringstream;
 
 namespace bao::utils {
     // -- Helper functions ---
@@ -53,22 +58,31 @@ namespace bao::utils {
      * Helper class for making a list of errors
      */
     class ErrorList final : public exception {
-        mutable string error_buffer;
-        vector<exception> errors;
+        vector<exception_ptr> exceptions;
+        mutable string message;
 
     public:
-        explicit ErrorList(const vector<exception> &errors) : errors(errors) {
-        }
-
-        [[nodiscard]] const vector<exception> &get_errors() const {
-            return this->errors;
+        explicit ErrorList(const vector<exception_ptr> &exceptions) : exceptions(exceptions) {
         }
 
         [[nodiscard]] const char *what() const noexcept override {
-            for (const auto &error: this->errors) {
-                this->error_buffer += string(error.what()) + string("\n");
+            ostringstream oss;
+            oss << "Số lỗi phát hiện: " << this->exceptions.size() << "\n\n";
+            for (const auto & i : exceptions) {
+                try {
+                    if (i) {
+                        std::rethrow_exception(i);
+                    }
+                } catch (const std::exception& e) {
+                    oss << e.what() << "\n\n";
+                }
             }
-            return this->error_buffer.c_str();
+            this->message = oss.str();
+            return this->message.c_str();
+        }
+
+        [[nodiscard]] const vector<exception_ptr> &get_exceptions() const {
+            return this->exceptions;
         }
     };
 
@@ -87,10 +101,11 @@ namespace bao::utils {
            column(column) {
             const Reader reader(std::move(filepath));
             string content = reader.get_line(line);
-            this->message = std::format("{}\n[Dòng {}, Cột {}] {}", content, line, column, message);
+            string liner(std::ranges::max(column - 1, 0), '-');
+            this->message = std::format("{}\n{}^\n[Dòng {}, Cột {}] {}", content, liner, line, column, message);
         }
 
-        [[nodiscard]] const char *what() const noexcept override {
+        [[nodiscard]] const char* what() const noexcept override {
             return this->message.c_str();
         }
 
@@ -105,8 +120,8 @@ namespace bao::utils {
          */
         static CompilerError new_error(const string &file, const string &dir, string message, const int line,
                                        const int column) {
-            const fs::path directory = file;
-            const fs::path filename = dir;
+            const fs::path filename = file;
+            const fs::path directory = dir;
             const fs::path fullpath = directory / filename;
             return CompilerError(std::move(message), fullpath.string(), line, column);
         }

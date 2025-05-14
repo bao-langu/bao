@@ -71,8 +71,8 @@ void bao::Lexer::tokenize() {
             // Fall back to the default case
             this->next();
             this->tokens.push_back(Token{TokenType::Unknown, current_utf8, line, column});
-        } catch (exception &e) {
-            this->errors.push_back(e);
+        } catch (...) {
+            this->exceptions.push_back(std::current_exception());
         }
     }
     // Add an EndOfFile token at the end
@@ -80,10 +80,10 @@ void bao::Lexer::tokenize() {
 }
 
 const vector<bao::Token> & bao::Lexer::get_tokens() const {
-    if (this->errors.empty()) {
+    if (this->exceptions.empty()) {
         return this->tokens;
     }
-    throw utils::ErrorList(this->errors);
+    throw utils::ErrorList(this->exceptions);
 }
 
 // Get the current code point as a UTF-8 string

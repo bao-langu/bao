@@ -43,6 +43,8 @@ namespace bao {
         void next();
 
         Token peek();
+
+        void skip_newlines();
     };
 }
 #endif //PARSER_H

@@ -45,10 +45,15 @@ void parserTest() {
         const string source = reader.read();
         cout << "Nội dung tệp nguồn:" << endl;
         cout << source << endl;
-        cout << "Đang phân tích cú pháp..." << endl;
+        cout << "Đang phân loại ký hiệu..." << endl;
         bao::Lexer lexer(source);
         lexer.tokenize();
-        bao::Parser parser("test.bao", ".", lexer.get_tokens());
+        vector<bao::Token> tokens = lexer.get_tokens();
+        for (const auto& token : tokens) {
+            bao::utils::print_token(token);
+        }
+        cout << "Đang phân tích cú pháp..." << endl;
+        bao::Parser parser("test.bao", ".", tokens);
         const auto program = parser.parse_program();
         cout << "Phân tích cú pháp thành công!" << endl;
         bao::utils::print_program(program);

@@ -19,12 +19,13 @@ bao::Parser::Parser(const string &filename, const string &directory, const vecto
 
 bao::Program bao::Parser::parse_program() {
     vector<FuncNode> functions;
-    vector<exception> exceptions;
+    vector<exception_ptr> exceptions;
     while (this->current().type != TokenType::EndOfFile) {
         try {
             // Skip newlines
-            while (this->current().type == TokenType::Newline) {
-                this->next();
+            this->skip_newlines();
+            if (this->current().type == TokenType::EndOfFile) {
+                break;
             }
             switch (this->current().type) {
                 case TokenType::Keyword:
@@ -45,7 +46,6 @@ bao::Program bao::Parser::parse_program() {
                                  [this]() {
                                      const int line = this->current().line;
                                      const int column = this->current().column;
-                                     this->next();
                                      throw utils::CompilerError::new_error(
                                          this->filename, this->directory, "Ký hiệu không xác định", line, column);
                                  });
@@ -53,13 +53,12 @@ bao::Program bao::Parser::parse_program() {
                 default:
                     const int line = this->current().line;
                     const int column = this->current().column;
-                    this->next();
                     throw utils::CompilerError::new_error(
                         this->filename, this->directory, "Ký hiệu không xác định", line, column);
             }
-        } catch (exception &e) {
+        } catch (...) {
             this->next();
-            exceptions.push_back(e);
+            exceptions.push_back(std::current_exception());
         }
     }
     if (!exceptions.empty()) {
@@ -78,14 +77,14 @@ bao::FuncNode bao::Parser::parse_function() {
 
     if (this->current().type != TokenType::Identifier) {
         throw utils::CompilerError::new_error(
-            this->filename, this->directory, "Mong đợi tên hàm ở vị trí này", line, column);
+            this->filename, this->directory, "Mong đợi tên hàm ở vị trí này", this->current().line, this->current().column);
     }
     const string function_name = this->current().value;
     this->next(); // Consumes identifier
 
     if (this->current().type != TokenType::LParen) {
         throw utils::CompilerError::new_error(
-            this->filename, this->directory, "Mong đợi '(' ở vị trí này", line, column);
+            this->filename, this->directory, "Mong đợi '(' ở vị trí này", this->current().line, this->current().column);
     }
     this->next(); // Consumes '('
 
@@ -94,26 +93,26 @@ bao::FuncNode bao::Parser::parse_function() {
 
     if (this->current().type != TokenType::RParen) {
         throw utils::CompilerError::new_error(
-            this->filename, this->directory, "Mong đợi ')' ở vị trí này", line, column);
+            this->filename, this->directory, "Mong đợi ')' ở vị trí này", this->current().line, this->current().column);
     }
     this->next(); // Consumes ')'
 
     if (this->current().value != "->") {
         throw utils::CompilerError::new_error(
-            this->filename, this->directory, "Mong đợi '->' tại vị trí này", line, column);
+            this->filename, this->directory, "Mong đợi '->' tại vị trí này", this->current().line, this->current().column);
     }
     this->next(); // Consumes '->'
 
     if (this->current().type != TokenType::Identifier) {
         throw utils::CompilerError::new_error(
-            this->filename, this->directory, "Mong đợi kiểu trả về tại vị trí này", line, column);
+            this->filename, this->directory, "Mong đợi kiểu trả về tại vị trí này", this->current().line, this->current().column);
     }
     const string type = this->current().value;
     this->next(); // Consumes type
 
     if (this->current().type != TokenType::Newline) {
         throw utils::CompilerError::new_error(
-            this->filename, this->directory, "Mong đợi xuống dòng tại vị trí này", line, column);
+            this->filename, this->directory, "Mong đợi xuống dòng tại vị trí này", this->current().line, this->current().column);
     }
     this->next(); // Consumes '\n'
 
@@ -122,7 +121,7 @@ bao::FuncNode bao::Parser::parse_function() {
 
     if (this->current().value != "kết thúc") {
         throw utils::CompilerError::new_error(
-            this->filename, this->directory, "Mong đợi từ khoá 'kết thúc' tại vị trí này", line, column);
+            this->filename, this->directory, "Mong đợi từ khoá 'kết thúc' tại vị trí này", this->current().line, this->current().column);
     }
     this->next(); // Consumes 'kết thúc'
 
@@ -136,13 +135,13 @@ bao::FuncNode bao::Parser::parse_procedure() {
 
     if (this->current().type != TokenType::Identifier) {
         throw utils::CompilerError::new_error(
-            this->filename, this->directory, "Mong đợi tên thủ tục ở vị trí này", line, column);
+            this->filename, this->directory, "Mong đợi tên thủ tục ở vị trí này", this->current().line, this->current().column);
     }
     const string function_name = this->current().value;
     this->next(); // Consumes identifier
     if (this->current().type != TokenType::LParen) {
         throw utils::CompilerError::new_error(
-            this->filename, this->directory, "Mong đợi '(' ở vị trí này", line, column);
+            this->filename, this->directory, "Mong đợi '(' ở vị trí này", this->current().line, this->current().column);
     }
     this->next(); // Consumes '('
 
@@ -151,13 +150,13 @@ bao::FuncNode bao::Parser::parse_procedure() {
 
     if (this->current().type != TokenType::RParen) {
         throw utils::CompilerError::new_error(
-            this->filename, this->directory, "Mong đợi ')' ở vị trí này", line, column);
+            this->filename, this->directory, "Mong đợi ')' ở vị trí này", this->current().line, this->current().column);
     }
     this->next(); // Consumes ')'
 
     if (this->current().type != TokenType::Newline) {
         throw utils::CompilerError::new_error(
-            this->filename, this->directory, "Mong đợi xuống dòng tại vị trí này", line, column);
+            this->filename, this->directory, "Mong đợi xuống dòng tại vị trí này", this->current().line, this->current().column);
     }
     this->next(); // Consumes '\n'
 
@@ -166,7 +165,7 @@ bao::FuncNode bao::Parser::parse_procedure() {
 
     if (this->current().value != "kết thúc") {
         throw utils::CompilerError::new_error(
-            this->filename, this->directory, "Mong đợi từ khoá 'kết thúc' tại vị trí này", line, column);
+            this->filename, this->directory, "Mong đợi từ khoá 'kết thúc' tại vị trí này", this->current().line, this->current().column);
     }
     this->next(); // Consumes 'kết thúc'
 
@@ -180,13 +179,19 @@ bao::Token bao::Parser::current() {
 void bao::Parser::next() {
     this->it++;
     if (this->it == this->tokens.size()) {
-        throw out_of_range("Lỗi nội bộ: không còn token");
+        throw out_of_range("Lỗi nội bộ: Không còn token");
     }
 }
 
 bao::Token bao::Parser::peek() {
     if (this->tokens[this->it].type == TokenType::EndOfFile) {
-        throw out_of_range("Lỗi nội bộ: không còn token để hé");
+        throw out_of_range("Lỗi nội bộ: Không còn token để hé lộ");
     }
     return this->tokens[this->it + 1];
+}
+
+void bao::Parser::skip_newlines() {
+    while (this->current().type == TokenType::Newline) {
+        this->next();
+    }
 }
