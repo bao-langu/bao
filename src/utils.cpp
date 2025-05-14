@@ -1,12 +1,11 @@
 //
 // Created by doqin on 13/05/2025.
 //
-#include <cstring>
-#include <utils.h>
+#include <bao/utils.h>
 #include <iostream>
-#include <lexer/maps.h>
+#include <bao/lexer/maps.h>
+#include <cstring>
 
-using std::strcmp;
 using std::cout;
 using std::endl;
 
@@ -27,5 +26,31 @@ void bao::utils::print_usage() {
 
 void bao::utils::print_token(const Token &token) {
     cout << "Token: " << token.value << ", Loại: " << token_type_map.at(token.type) << ", Dòng: " << token.line << ", Cột: " << token.column << endl;
+}
+
+void bao::utils::print_program(const Program &program) {
+    cout << "Nội dung chương trình:" << endl;
+    cout << "Tên: " << program.name << endl;
+    cout << "Đường dẫn: " << program.path << endl;
+    cout << "Số hàm: " << program.funcs.size() << endl;
+    for (const auto &func : program.funcs) {
+        auto [line, column] = func.pos();
+        cout << std::format(
+            "Hàm: {} -> {} (Dòng {}, Cột {})\n",
+            func.get_name(), func.get_return_type().get_name(),
+            line, column);
+    }
+}
+
+
+void bao::utils::match(
+    const string& val,
+    const std::unordered_map<string, std::function<void()>>& pattern,
+    const std::function<void()>& default_case) {
+    if (pattern.contains(val)) {
+        pattern.at(val)();
+    } else {
+       default_case();
+    }
 }
 

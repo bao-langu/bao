@@ -1,7 +1,7 @@
 //
 // Created by doqin on 13/05/2025.
 //
-#include <test.h>
+#include <../include/bao/test.h>
 
 // --- Included libraries ---
 #include <iostream>
@@ -10,9 +10,10 @@
 #include <unicode/normalizer2.h>
 #include <unicode/utypes.h>
 #include <unicode/schriter.h>
-#include <filereader/reader.h>
-#include <utils.h>
-#include <lexer/lexer.h>
+#include <bao/filereader/reader.h>
+#include <bao/utils.h>
+#include <bao/lexer/lexer.h>
+#include <bao/parser/parser.h>
 
 // --- Using types ---
 using std::cerr;
@@ -25,14 +26,35 @@ using icu::Normalizer2;
 using icu::UnicodeString;
 using icu::StringCharacterIterator;
 
+// --- Test functions ---
+void parserTest();
 void lexerTest();
 void readerTest();
 int icuTest();
 
 // Main test function
 int test(int argc, char* argv[]) {
-    lexerTest();
+    parserTest();
     return 0;
+}
+
+// Test the parser
+void parserTest() {
+    try {
+        const bao::Reader reader("test.bao");
+        const string source = reader.read();
+        cout << "Nội dung tệp nguồn:" << endl;
+        cout << source << endl;
+        cout << "Đang phân tích cú pháp..." << endl;
+        bao::Lexer lexer(source);
+        lexer.tokenize();
+        bao::Parser parser("test.bao", ".", lexer.get_tokens());
+        const auto program = parser.parse_program();
+        cout << "Phân tích cú pháp thành công!" << endl;
+        bao::utils::print_program(program);
+    } catch (exception& e) {
+        cerr << "Gặp sự cố trong quá trình phân tích cú pháp:" << endl << e.what() << endl;
+    }
 }
 
 // Test the lexer

@@ -4,15 +4,15 @@
 
 #include <string>
 #include <stdexcept>
-#include <lexer/lexer.h>
-#include <lexer/sets.h>
+#include <bao/lexer/lexer.h>
+#include <bao/lexer/sets.h>
 #include <unicode/uchar.h>
-#include <utils.h>
+#include <bao/utils.h>
+#include <bao/lexer/maps.h>
 
 #define U_SENTINEL 0xFFFF
 
 using std::out_of_range;
-
 
 // -- Lexer's constructor --
 bao::Lexer::Lexer(const string &source): it(UnicodeString::fromUTF8(source)) {
@@ -20,11 +20,11 @@ bao::Lexer::Lexer(const string &source): it(UnicodeString::fromUTF8(source)) {
     this->it.setToStart();
     this->current_line = 1;
     this->current_column = 1;
-    this->code_point_index = 1;
+    this->code_point_index = 0;
 }
 
 // -- Lexer's methods --
-bool isNewLine(UChar32 cp);
+bool is_new_line(UChar32 cp);
 
 // Tokenize the source code
 void bao::Lexer::tokenize() {
@@ -55,6 +55,16 @@ void bao::Lexer::tokenize() {
             // Handles symbols
             if (operators.contains(current_utf8)) {
                 this->tokens.push_back(handle_symbols());
+                continue;
+            }
+
+            // Specific tokens
+            if (token_map.contains(this->current_utf8())) {
+                Token token = token_map.at(this->current_utf8());
+                this->next();
+                token.line = line;
+                token.column = column;
+                this->tokens.push_back(token);
                 continue;
             }
 
@@ -116,8 +126,8 @@ string bao::Lexer::peek() const {
 
 // Skip whitespace characters and newlines
 void bao::Lexer::skip_whitespace() {
-    while (this->it.hasNext() && (this->current_utf8() == " " || isNewLine(this->current_code_point()))) {
-        if (isNewLine(this->current_code_point())) {
+    while (this->it.hasNext() && (this->current_utf8() == " " || is_new_line(this->current_code_point()))) {
+        if (is_new_line(this->current_code_point())) {
             this->tokens.push_back(bao::Token{bao::TokenType::Newline, "\\n", this->current_line, this->current_column});
             this->current_line++;
             this->current_column = 0;
@@ -148,12 +158,44 @@ bao::Token bao::Lexer::handle_identifier() {
         const int line = this->current_line;
         const int column = this->current_column;
         string identifier;
-        identifier += this->current_utf8();
-        this->next();
+        // Get first identifier
         while (this->it.hasNext() && (u_isalnum(this->current_code_point()) || this->current_utf8() == "_")) {
             identifier += this->current_utf8();
             this->next();
         }
+        while (this->it.hasNext() && this->current_utf8() == " ") {
+            this->next();
+        }
+        // Handles multi-word keywords
+        if (u_isalpha(this->current_code_point())) {
+            const int anchor = this->code_point_index; // In case this doesn't work out
+            const int anchor_line = this->current_line;
+            const int anchor_column = this->current_column;
+            string second_identifier;
+            while (this->it.hasNext() && (u_isalnum(this->current_code_point()) || this->current_utf8() == "_")) {
+                second_identifier += this->current_utf8();
+                this->next();
+            }
+            if (keywords.contains(format("{} {}", identifier, second_identifier))) {
+                return Token{TokenType::Keyword, format("{} {}", identifier, second_identifier), line, column};
+            }
+            // Fall back
+            this->code_point_index = anchor;
+            this->current_line = anchor_line;
+            this->current_column = anchor_column;
+            this->seek(anchor);
+        }
+
+        // Special identifier
+        if (identifier == "E") {
+            return Token{TokenType::Operator, identifier, line, column};
+        }
+
+        // Handles single-word keyword
+        if (keywords.contains(identifier)) {
+            return Token{TokenType::Keyword, identifier, line, column};
+        }
+        // Else is just an identifier
         return Token{TokenType::Identifier, identifier, line, column};
     } catch ([[maybe_unused]] out_of_range &e) {
         throw;
@@ -198,6 +240,7 @@ bao::Token bao::Lexer::handle_symbols() {
             this->next();
             return Token{TokenType::Operator, double_operator, line, column};
         }
+
         // Otherwise, it's a single operator
         this->next();
         return Token{TokenType::Operator, this->current_utf8(), line, column};
@@ -206,11 +249,11 @@ bao::Token bao::Lexer::handle_symbols() {
     }
 }
 
-bool isNewLine(const UChar32 cp) {
-    return cp == 0x000A || // LF
-           cp == 0x000D || // CR
-           cp == 0x000C || // FF
-           cp == 0x0085 || // NEL
-           cp == 0x2028 || // Line Separator
-           cp == 0x2029;   // Paragraph Separator
+bool is_new_line(const UChar32 cp) {
+    return cp == 0x000A; // LF
+           // cp == 0x000D || // CR
+           // cp == 0x000C || // FF
+           // cp == 0x0085 || // NEL
+           // cp == 0x2028 || // Line Separator
+           // cp == 0x2029;   // Paragraph Separator
 }

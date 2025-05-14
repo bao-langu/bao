@@ -25,6 +25,13 @@ namespace bao {
          */
         [[nodiscard]] string read() const;
 
+        /**
+         *
+         * @param line Line to get bro
+         * @return Line grabbed from the source file
+         */
+        [[nodiscard]] string get_line(int line) const;
+
     private:
         /**
          *

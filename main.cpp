@@ -1,6 +1,6 @@
 #include <stdexcept>
-#include <test.h>
-#include <utils.h>
+#include <bao/test.h>
+#include <bao/utils.h>
 
 // --- Main program ---
 int main(const int argc, char *argv[]) {

@@ -1,11 +1,12 @@
 //
 // Created by doqin on 13/05/2025.
 //
-#include <filereader/reader.h>
+#include <bao/filereader/reader.h>
 #include <utility>
 #include <fstream>
 #include <filesystem>
 #include <format>
+#include <sstream>
 #include <unicode/utypes.h>
 #include <unicode/normalizer2.h>
 #include <unicode/unistr.h>
@@ -19,6 +20,7 @@ using std::invalid_argument;
 using std::format;
 using icu::Normalizer2;
 using icu::UnicodeString;
+using std::out_of_range;
 
 bao::Reader::Reader(string path) {
     this->path = std::move(path);
@@ -40,7 +42,7 @@ string bao::Reader::read() const {
     // Make sure it's valid
     if (!fs::exists(full_src_path)) {
         throw invalid_argument(
-            format("Lỗi: tệp không tồn tại: {}", full_src_path.string()));
+            format("Lỗi nội bộ: tệp không tồn tại: {}", full_src_path.string()));
     }
 
     // Content from file
@@ -48,7 +50,7 @@ string bao::Reader::read() const {
     fstream file(full_src_path);
     if (!file) {
         throw runtime_error(
-            format("Lỗi: gặp sự cố đọc tệp: {}", full_src_path.string()));
+            format("Lỗi nội bộ: gặp sự cố đọc tệp: {}", full_src_path.string()));
     }
 
     // Gets the raw string
@@ -57,6 +59,43 @@ string bao::Reader::read() const {
 
     file.close(); // Good practice
     return contents;
+}
+
+string bao::Reader::get_line(int target_line) const {
+    // --- Get the full src path ---
+    fs::path curr_dir = fs::current_path(); // Work directory
+    fs::path src_path = path; // Src path input
+    fs::path full_src_path; // Final path
+
+    // In case src path is already absolute
+    if (src_path.is_absolute()) {
+        full_src_path = src_path;
+    } else {
+        full_src_path = curr_dir / src_path;
+    }
+
+    // Make sure it's valid
+    if (!fs::exists(full_src_path)) {
+        throw invalid_argument(
+            format("Lỗi: tệp không tồn tại: {}", full_src_path.string()));
+    }
+
+    int current_line = 1;
+    string line;
+    fstream file(full_src_path);
+    if (!file) {
+        throw runtime_error(
+            format("Lỗi nội bộ: gặp sự cố đọc tệp: {}", full_src_path.string()));
+    }
+
+    while (getline(file, line)) {
+        if (current_line == target_line) {
+            return normalize(line);
+        }
+        current_line++;
+    }
+
+    throw out_of_range("Lỗi: dòng nằm ngoài số dòng của tệp");
 }
 
 string bao::Reader::normalize(const string& content) {
