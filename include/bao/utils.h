@@ -14,9 +14,15 @@
 #include <filesystem>
 #include <unordered_map>
 #include <functional>
-#include <bao/parser/ast.h>
 #include <format>
 #include <sstream>
+
+namespace bao {
+    class StmtNode;
+    struct Program;
+    class FuncNode;
+    class ExprNode;
+}
 
 namespace fs = std::filesystem;
 using std::exception;
@@ -26,8 +32,18 @@ using std::ostringstream;
 
 namespace bao::utils {
     // -- Helper functions ---
+    /**
+     * Helper function to match program argument
+     * @param argc Program argument count
+     * @param argv Program argument variables
+     * @param target C_string target argument
+     * @return Boolean value whether it contains it or not
+     */
     bool arg_contains(int argc, char *argv[], const char *target);
 
+    /**
+     * Helper function to print how to use the compiler
+     */
     void print_usage();
 
     /**
@@ -40,7 +56,13 @@ namespace bao::utils {
      * Helper function to print the program
      * @param program The program to print
      */
-    void print_program(const Program &program);
+    void print_program(const Program& program);
+
+    void print_function(const FuncNode& func, const string &padding);
+
+    void print_statement(StmtNode* stmt, const string &padding);
+
+    void print_expression(ExprNode* expr, const string &padding);
 
     /**
      * Helper function for matching a value against a set of patterns
@@ -87,10 +109,12 @@ namespace bao::utils {
     };
 
     // --- Compiler error class ---
+    /**
+     * Helper class for making a compiler error
+     */
     class CompilerError final : public exception {
         string message;
         int line, column;
-
     public:
         explicit CompilerError(
             string message,
@@ -126,6 +150,29 @@ namespace bao::utils {
             return CompilerError(std::move(message), fullpath.string(), line, column);
         }
     };
+
+    /**
+     * Helper function for padding strings
+     * @param input String to add padding
+     * @param padding Kind of padding you want
+     * @return Padded string
+     */
+    string pad_lines(const string& input, const string& padding);
+
+    /**
+     * Helper function for creating an exception_ptr
+     * @tparam ExceptionType Exception's type
+     * @param ex Exception to create pointer from
+     * @return Exception pointer
+     */
+    template<typename ExceptionType>
+    std::exception_ptr make_exception_ptr(const ExceptionType& ex) {
+        try {
+            throw ex;
+        } catch (...) {
+            return std::current_exception();
+        }
+    }
 }
 
 #endif //UTILS_H

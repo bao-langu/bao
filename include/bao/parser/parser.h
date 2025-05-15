@@ -8,6 +8,7 @@
 #include <vector>
 #include <bao/lexer/token.h>
 #include <bao/parser/ast.h>
+#include <bao/utils.h>
 
 using std::vector;
 
@@ -45,6 +46,11 @@ namespace bao {
         Token peek();
 
         void skip_newlines();
+
+        std::unique_ptr<StmtNode> parse_statement();
+        std::unique_ptr<RetStmt> parse_retstmt();
+
+        std::unique_ptr<ExprNode> parse_expression();
     };
 }
 #endif //PARSER_H

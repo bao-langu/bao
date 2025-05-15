@@ -5,9 +5,12 @@
 #include <iostream>
 #include <bao/lexer/maps.h>
 #include <cstring>
+#include <bao/parser/ast.h>
 
 using std::cout;
 using std::endl;
+using std::istringstream;
+using std::ostringstream;
 
 bool bao::utils::arg_contains(const int argc, char *argv[], const char *target) {
     for (int i = 1; i < argc; ++i) {
@@ -30,18 +33,52 @@ void bao::utils::print_token(const Token &token) {
 
 void bao::utils::print_program(const Program &program) {
     cout << "Nội dung chương trình:" << endl;
-    cout << "Tên: " << program.name << endl;
-    cout << "Đường dẫn: " << program.path << endl;
-    cout << "Số hàm: " << program.funcs.size() << endl;
+    cout << "\tTên: " << program.name << endl;
+    cout << "\tĐường dẫn: " << program.path << endl;
+    cout << "\tSố hàm: " << program.funcs.size() << endl;
     for (const auto &func : program.funcs) {
-        auto [line, column] = func.pos();
-        cout << std::format(
-            "Hàm: {} -> {} (Dòng {}, Cột {})\n",
-            func.get_name(), func.get_return_type().get_name(),
-            line, column);
+        print_function(func, "\t");
     }
 }
 
+void bao::utils::print_function(const FuncNode& func, const string &padding) {
+    auto [line, column] = func.pos();
+    const auto message = std::format(
+        "Hàm: {} -> {} (Dòng {}, Cột {})",
+        func.get_name(), func.get_return_type().get_name(),
+        line, column);
+    cout << pad_lines(message, padding) << endl;
+    for (const auto& stmt_ptr : func.get_stmts()) {
+        print_statement(stmt_ptr.get(), padding + "\t");
+    }
+}
+
+void bao::utils::print_statement(StmtNode* stmt, const string &padding) {
+    if (!stmt) {
+        cout << padding + "\tCâu lệnh không xác định" << endl;
+        return;
+    }
+    auto [line, column] = stmt->pos();
+    const auto message = std::format("{} (Dòng {}, Cột {}):", stmt->get_name(), line, column);
+    cout << pad_lines(message, padding) << endl;
+    if (const auto ret_stmt = dynamic_cast<RetStmt*>(stmt)) {
+        print_expression(ret_stmt->get_val(), padding + "\t");
+    } else {
+        cout << padding + "\tBiểu thức không xác định" << endl;
+    }
+}
+
+void bao::utils::print_expression(ExprNode* expr, const string &padding) {
+    auto [line, column] = expr->pos();
+    if (const auto num_expr = dynamic_cast<NumLitExpr*>(expr)) {
+        const auto message = std::format(
+            "Biểu thức số: {} (Dòng {}, Cột {})",
+            num_expr->get_value(), line, column);
+        cout << pad_lines(message, padding) << endl;
+    } else {
+        cout << padding + "\tBiểu thức không xác định" << endl;
+    }
+}
 
 void bao::utils::match(
     const string& val,
@@ -54,3 +91,16 @@ void bao::utils::match(
     }
 }
 
+string bao::utils::pad_lines(const string &input, const string &padding) {
+    istringstream iss(input);
+    ostringstream oss;
+    string line;
+    bool first = true;
+    while (std::getline(iss, line)) {
+        if (!first) oss << "\n";
+        oss << padding << line;
+        first = false;
+    }
+
+    return oss.str();
+}

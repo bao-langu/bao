@@ -1,7 +1,7 @@
 //
 // Created by doqin on 13/05/2025.
 //
-#include <../include/bao/test.h>
+#include <bao/test.h>
 
 // --- Included libraries ---
 #include <iostream>
@@ -54,7 +54,7 @@ void parserTest() {
         }
         cout << "Đang phân tích cú pháp..." << endl;
         bao::Parser parser("test.bao", ".", tokens);
-        const auto program = parser.parse_program();
+        const bao::Program& program = parser.parse_program();
         cout << "Phân tích cú pháp thành công!" << endl;
         bao::utils::print_program(program);
     } catch (exception& e) {

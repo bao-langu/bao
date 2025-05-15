@@ -11,6 +11,7 @@
 using std::string;
 
 namespace bao {
+    // --- Type base class ---
     class Type {
         string name;
     public:
@@ -19,6 +20,7 @@ namespace bao {
         [[nodiscard]] string get_name() const { return name; }
     };
 
+    // --- Primitive type ---
     class PrimitiveType final : public Type {
     public:
         explicit PrimitiveType(const string &name) : Type(name) {}
