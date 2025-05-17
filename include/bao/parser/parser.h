@@ -32,12 +32,12 @@ namespace bao {
             const vector<Token> &tokens
         );
 
-        Program parse_program();
+        ast::Program parse_program();
 
     private:
-        FuncNode parse_function();
+        ast::FuncNode parse_function();
 
-        FuncNode parse_procedure();
+        ast::FuncNode parse_procedure();
 
         Token current();
 
@@ -47,10 +47,10 @@ namespace bao {
 
         void skip_newlines();
 
-        std::unique_ptr<StmtNode> parse_statement();
-        std::unique_ptr<RetStmt> parse_retstmt();
+        std::unique_ptr<ast::StmtNode> parse_statement();
+        std::unique_ptr<ast::RetStmt> parse_retstmt();
 
-        std::unique_ptr<ExprNode> parse_expression();
+        std::unique_ptr<ast::ExprNode> parse_expression();
     };
 }
 #endif //PARSER_H

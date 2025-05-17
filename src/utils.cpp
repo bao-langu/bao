@@ -31,7 +31,7 @@ void bao::utils::print_token(const Token &token) {
     cout << "Token: " << token.value << ", Loại: " << token_type_map.at(token.type) << ", Dòng: " << token.line << ", Cột: " << token.column << endl;
 }
 
-void bao::utils::print_program(const Program &program) {
+void bao::utils::print_program(const ast::Program &program) {
     cout << "Nội dung chương trình:" << endl;
     cout << "\tTên: " << program.name << endl;
     cout << "\tĐường dẫn: " << program.path << endl;
@@ -41,11 +41,11 @@ void bao::utils::print_program(const Program &program) {
     }
 }
 
-void bao::utils::print_function(const FuncNode& func, const string &padding) {
+void bao::utils::print_function(const ast::FuncNode& func, const string &padding) {
     auto [line, column] = func.pos();
     const auto message = std::format(
         "Hàm: {} -> {} (Dòng {}, Cột {})",
-        func.get_name(), func.get_return_type().get_name(),
+        func.get_name(), func.get_return_type()->get_name(),
         line, column);
     cout << pad_lines(message, padding) << endl;
     for (const auto& stmt_ptr : func.get_stmts()) {
@@ -53,7 +53,7 @@ void bao::utils::print_function(const FuncNode& func, const string &padding) {
     }
 }
 
-void bao::utils::print_statement(StmtNode* stmt, const string &padding) {
+void bao::utils::print_statement(ast::StmtNode* stmt, const string &padding) {
     if (!stmt) {
         cout << padding + "\tCâu lệnh không xác định" << endl;
         return;
@@ -61,19 +61,19 @@ void bao::utils::print_statement(StmtNode* stmt, const string &padding) {
     auto [line, column] = stmt->pos();
     const auto message = std::format("{} (Dòng {}, Cột {}):", stmt->get_name(), line, column);
     cout << pad_lines(message, padding) << endl;
-    if (const auto ret_stmt = dynamic_cast<RetStmt*>(stmt)) {
+    if (const auto ret_stmt = dynamic_cast<ast::RetStmt*>(stmt)) {
         print_expression(ret_stmt->get_val(), padding + "\t");
     } else {
         cout << padding + "\tBiểu thức không xác định" << endl;
     }
 }
 
-void bao::utils::print_expression(ExprNode* expr, const string &padding) {
+void bao::utils::print_expression(ast::ExprNode* expr, const string &padding) {
     auto [line, column] = expr->pos();
-    if (const auto num_expr = dynamic_cast<NumLitExpr*>(expr)) {
+    if (const auto num_expr = dynamic_cast<ast::NumLitExpr*>(expr)) {
         const auto message = std::format(
-            "Biểu thức số: {} (Dòng {}, Cột {})",
-            num_expr->get_value(), line, column);
+            "Biểu thức số: {} ({}) (Dòng {}, Cột {})",
+            num_expr->get_value(), num_expr->get_type()->get_name(), line, column);
         cout << pad_lines(message, padding) << endl;
     } else {
         cout << padding + "\tBiểu thức không xác định" << endl;
@@ -103,4 +103,51 @@ string bao::utils::pad_lines(const string &input, const string &padding) {
     }
 
     return oss.str();
+}
+
+bool bao::utils::is_literal(ast::ExprNode* expr) {
+    // Null check
+    if (!expr) {
+        return false;
+    }
+    if (dynamic_cast<ast::NumLitExpr*>(expr)) {
+        return true;
+    }
+    return false;
+}
+
+void bao::utils::cast_literal(ast::NumLitExpr *expr, const Type *type) {
+    expr->set_type(std::move(std::make_unique<Type>(*type)));
+}
+
+bool bao::utils::can_cast_literal(const ast::NumLitExpr *expr, const Type *type) {
+    if (!expr->get_type()) {
+        return false; // FIXME: Handle this case
+    }
+    const auto prim = dynamic_cast<PrimitiveType*>(expr->get_type());
+    if (!prim) {
+        return false; // FIXME: Handle this case
+    }
+    switch (prim->get_type()) {
+        case Primitive::N64:
+        case Primitive::N32:
+            if (type->get_name() == "N32") {
+                return true;
+            }
+            return false;
+        case Primitive::Z64:
+        case Primitive::Z32:
+            if (type->get_name() == "Z32") {
+                return true;
+            }
+            return false;
+        case Primitive::R64:
+        case Primitive::R32:
+            if (type->get_name() == "R32") {
+                return true;
+            }
+            return false;
+        default:
+            return false;
+    }
 }

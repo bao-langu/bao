@@ -6,39 +6,17 @@
 #define MAPS_H
 
 #include <unordered_map>
-#include <bao/lexer/token.h>
 #include <string>
 
 using std::string;
 
 namespace bao {
-    inline const std::unordered_map<TokenType, string> token_type_map = {
-        {TokenType::Operator,   "Operator"},
-        {TokenType::Identifier, "Identifier"},
-        {TokenType::Keyword,    "Keyword"},
-        {TokenType::Literal,    "Literal"},
-        {TokenType::String,     "String"},
-        {TokenType::Semicolon,  "Semicolon"},
-        {TokenType::Comma,      "Comma"},
-        {TokenType::LParen,     "LParen"},
-        {TokenType::RParen,     "RParen"},
-        {TokenType::LBracket,   "LBracket"},
-        {TokenType::RBracket,   "RBracket"},
-        {TokenType::LBrace,     "LBrace"},
-        {TokenType::RBrace,     "RBrace"},
-        {TokenType::Newline,    "Newline"},
-        {TokenType::EndOfFile,  "EndOfFile"},
-        {TokenType::Unknown,    "Unknown"}
-        };
-
-    inline const std::unordered_map<string, Token> token_map = {
-        {"(", Token{TokenType::LParen,      "("}},
-        {")", Token{TokenType::RParen,      ")"}},
-        {"[", Token{TokenType::LBracket,    "["}},
-        {"]", Token{TokenType::RBracket,    "]"}},
-        {";", Token{TokenType::Semicolon,   ";"}},
-        {",", Token{TokenType::Comma,       ","}},
-    };
+    struct Token;
+    enum class Primitive;
+    enum class TokenType;
+    extern const std::unordered_map<TokenType, string> token_type_map;
+    extern const std::unordered_map<string, Token> token_map;
+    extern const std::unordered_map<string, Primitive> primitive_map;
 }
 
 #endif //MAPS_H

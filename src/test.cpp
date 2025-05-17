@@ -14,6 +14,7 @@
 #include <bao/utils.h>
 #include <bao/lexer/lexer.h>
 #include <bao/parser/parser.h>
+#include <bao/sema/analyzer.h>
 
 // --- Using types ---
 using std::cerr;
@@ -27,6 +28,7 @@ using icu::UnicodeString;
 using icu::StringCharacterIterator;
 
 // --- Test functions ---
+void semanticsTest();
 void parserTest();
 void lexerTest();
 void readerTest();
@@ -34,8 +36,36 @@ int icuTest();
 
 // Main test function
 int test(int argc, char* argv[]) {
-    parserTest();
+    semanticsTest();
     return 0;
+}
+
+void semanticsTest() {
+    try {
+        const bao::Reader reader("test.bao");
+        const string source = reader.read();
+        cout << "Nội dung tệp nguồn:" << endl;
+        cout << source << endl;
+        cout << "Đang phân loại ký hiệu..." << endl;
+        bao::Lexer lexer(source);
+        lexer.tokenize();
+        vector<bao::Token> tokens = lexer.get_tokens();
+        for (const auto& token : tokens) {
+            bao::utils::print_token(token);
+        }
+        cout << "Đang phân tích cú pháp..." << endl;
+        bao::Parser parser("test.bao", ".", tokens);
+        bao::ast::Program program = std::move(parser.parse_program());
+        cout << "Phân tích cú pháp thành công!" << endl;
+        bao::utils::print_program(program);
+        cout << "Đang phân tích ngữ nghĩa..." << endl;
+        bao::Analyzer analyzer(std::move(program));
+        program = std::move(analyzer.analyze_program());
+        cout << "Phân tích ngữ nghĩa thành công!" << endl;
+        bao::utils::print_program(program);
+    } catch (const exception& e) {
+        cerr << "Gặp sự cố trong quá trình kiểm tra ngữ nghĩa: " << endl << e.what() << endl;
+    }
 }
 
 // Test the parser
@@ -54,7 +84,7 @@ void parserTest() {
         }
         cout << "Đang phân tích cú pháp..." << endl;
         bao::Parser parser("test.bao", ".", tokens);
-        const bao::Program& program = parser.parse_program();
+        const bao::ast::Program& program = parser.parse_program();
         cout << "Phân tích cú pháp thành công!" << endl;
         bao::utils::print_program(program);
     } catch (exception& e) {

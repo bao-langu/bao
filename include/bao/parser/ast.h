@@ -4,7 +4,7 @@
 
 #ifndef AST_H
 #define AST_H
-#include <bao/parser/types.h>
+#include <bao/types.h>
 #include <bao/utils.h>
 #include <string>
 #include <utility>
@@ -14,7 +14,7 @@ using std::string;
 using std::pair;
 using std::vector;
 
-namespace bao {
+namespace bao::ast {
     // --- AST Node interface ---
     class ASTNode {
     protected:
@@ -61,7 +61,7 @@ namespace bao {
         ):  ASTNode(std::move(name),
             line, column) {}
 
-        virtual ~StmtNode() override = default;
+        ~StmtNode() override = default;
     };
 
     /**
@@ -69,36 +69,50 @@ namespace bao {
      */
 
     class ExprNode : public ASTNode {
+        std::unique_ptr<Type> type;
     public:
-        ExprNode(): ASTNode("unknown", 0, 0) {}
+        ExprNode(): ASTNode("unknown", 0, 0), type(std::move(std::make_unique<UnknownType>())) {}
         ExprNode(
             string name,
+            std::unique_ptr<Type>&& type,
             const int line,
             const int column
         ):  ASTNode(std::move(name),
-            line, column) {}
+            line, column), type(std::move(type)) {}
 
-        virtual ~ExprNode() override = default;
+        ~ExprNode() override = default;
+
+        [[nodiscard]] Type* get_type() const {
+            return type.get();
+        }
+
+        void set_type(std::unique_ptr<Type>&& new_type) {
+            type = std::move(new_type);
+        }
     };
 
     // --- Program's variables ---
     class VarNode final : public ASTNode {
-        Type type;
+        std::unique_ptr<Type> type;
     public:
         VarNode(
             string name,
             const int line,
             const int column,
-            const Type &type
+            std::unique_ptr<Type>&& type
         ):  ASTNode(std::move(name), line, column),
-            type(type) {}
+            type(std::move(type)) {}
+
+        [[nodiscard]] Type* get_type() const {
+            return type.get();
+        }
     };
 
     // --- Program's function ---
     class FuncNode final : public ASTNode {
         vector<VarNode> params;
         vector<std::unique_ptr<StmtNode>> stmts;
-        Type return_type;
+        std::unique_ptr<Type> return_type;
     public:
         FuncNode(const FuncNode&) = delete;
         FuncNode& operator=(const FuncNode&) = delete;
@@ -107,21 +121,21 @@ namespace bao {
 
         FuncNode(
             string name,
-            vector<VarNode> params,
-            vector<std::unique_ptr<StmtNode>> stmts,
-            const Type &return_type,
+            vector<VarNode>&& params,
+            vector<std::unique_ptr<StmtNode>>&& stmts,
+            std::unique_ptr<Type>&& return_type,
             const int line, const int column
         ):  ASTNode(std::move(name), line, column),
             params(std::move(params)),
             stmts(std::move(stmts)),
-            return_type(return_type) {
+            return_type(std::move(return_type)) {
         }
         [[nodiscard]] const vector<VarNode> &get_params() const {
             return params;
         }
 
-        [[nodiscard]] const Type &get_return_type() const {
-            return return_type;
+        [[nodiscard]] Type* get_return_type() const {
+            return return_type.get();
         }
 
         [[nodiscard]] const vector<std::unique_ptr<StmtNode>> &get_stmts() const {
@@ -137,7 +151,7 @@ namespace bao {
         public:
         explicit VarDeclStmt(
             VarNode  var,
-            std::unique_ptr<ExprNode> val,
+            std::unique_ptr<ExprNode>&& val,
             const int line, const int column
             ):
             StmtNode("vardeclstmt", line, column),
@@ -171,23 +185,18 @@ namespace bao {
 
     class NumLitExpr final : public ExprNode {
         string value;
-        Type type;
-        public:
+    public:
         explicit NumLitExpr(
             string value,
-            const Type &type,
+            std::unique_ptr<Type> &&type,
             const int line,
             const int column
             ):
-            ExprNode("numlitexpr", line, column),
-            value(std::move(value)), type(type) {}
+            ExprNode("numlitexpr", std::move(type), line, column),
+            value(std::move(value)) {}
 
-        string get_value() const {
+        [[nodiscard]] string get_value() const {
             return value;
-        }
-
-        [[nodiscard]] const Type &get_type() const {
-            return type;
         }
     };
 
@@ -198,7 +207,7 @@ namespace bao {
         vector<FuncNode> funcs;
         explicit Program(
             string name, string path,
-            vector<FuncNode> funcs)
+            vector<FuncNode>&& funcs)
         :   name(std::move(name)),
             path(std::move(path)),
             funcs(std::move(funcs)) {}

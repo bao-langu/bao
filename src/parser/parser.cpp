@@ -3,7 +3,7 @@
 //
 #include <bao/parser/parser.h>
 #include <bao/utils.h>
-#include <bao/parser/types.h>
+#include <bao/types.h>
 #include <bao/parser/ast.h>
 #include <filesystem>
 
@@ -17,8 +17,8 @@ bao::Parser::Parser(const string &filename, const string &directory, const vecto
     this->it = 0;
 }
 
-bao::Program bao::Parser::parse_program() {
-    vector<FuncNode> functions;
+bao::ast::Program bao::Parser::parse_program() {
+    vector<ast::FuncNode> functions;
     vector<exception_ptr> exceptions;
     while (this->current().type != TokenType::EndOfFile) {
         try {
@@ -64,13 +64,13 @@ bao::Program bao::Parser::parse_program() {
     if (!exceptions.empty()) {
         throw utils::ErrorList(exceptions);
     }
-    return Program(
+    return ast::Program(
         this->filename,
         this->directory,
         std::move(functions));
 }
 
-bao::FuncNode bao::Parser::parse_function() {
+bao::ast::FuncNode bao::Parser::parse_function() {
     const int line = this->current().line;
     const int column = this->current().column;
     this->next(); // Consumes "hàm"
@@ -88,7 +88,7 @@ bao::FuncNode bao::Parser::parse_function() {
     }
     this->next(); // Consumes '('
 
-    vector<VarNode> params;
+    vector<ast::VarNode> params;
     // TODO: Implement parameters parsing
 
     if (this->current().type != TokenType::RParen) {
@@ -107,6 +107,11 @@ bao::FuncNode bao::Parser::parse_function() {
         throw utils::CompilerError::new_error(
             this->filename, this->directory, "Mong đợi kiểu trả về tại vị trí này", this->current().line, this->current().column);
     }
+    // TODO: Implement types other than primitive
+    if (!primitive_map.contains(this->current().value)) {
+        throw utils::CompilerError::new_error(
+            this->filename, this->directory, "Mong đợi kiểu nguyên thuỷ", this->current().line, this->current().column);
+    }
     const string type = this->current().value;
     this->next(); // Consumes type
 
@@ -116,7 +121,7 @@ bao::FuncNode bao::Parser::parse_function() {
     }
     this->next(); // Consumes '\n'
 
-    vector<std::unique_ptr<StmtNode>> stmts;
+    vector<std::unique_ptr<ast::StmtNode>> stmts;
     vector<exception_ptr> exceptions;
     while (this->current().value != "kết thúc") {
         // Ignore newlines
@@ -141,10 +146,10 @@ bao::FuncNode bao::Parser::parse_function() {
     }
     this->next(); // Consumes 'kết thúc'
 
-    return FuncNode(function_name, params, std::move(stmts), PrimitiveType(type), line, column);
+    return {std::move(function_name), std::move(params), std::move(stmts), std::move(std::make_unique<PrimitiveType>(type)), line, column};
 }
 
-bao::FuncNode bao::Parser::parse_procedure() {
+bao::ast::FuncNode bao::Parser::parse_procedure() {
     const int line = this->current().line;
     const int column = this->current().column;
     this->next(); // Consumes "thủ tục"
@@ -161,7 +166,7 @@ bao::FuncNode bao::Parser::parse_procedure() {
     }
     this->next(); // Consumes '('
 
-    vector<VarNode> params;
+    vector<ast::VarNode> params;
     // TODO: Implement parameters parsing
 
     if (this->current().type != TokenType::RParen) {
@@ -176,7 +181,7 @@ bao::FuncNode bao::Parser::parse_procedure() {
     }
     this->next(); // Consumes '\n'
 
-    vector<std::unique_ptr<StmtNode>> stmts;
+    vector<std::unique_ptr<ast::StmtNode>> stmts;
     vector<exception_ptr> exceptions;
     while (this->current().value != "kết thúc") {
         // Ignore newlines
@@ -202,7 +207,7 @@ bao::FuncNode bao::Parser::parse_procedure() {
     }
     this->next(); // Consumes 'kết thúc'
 
-    return FuncNode(function_name, params, std::move(stmts), PrimitiveType("rỗng"), line, column);
+    return {std::move(function_name), std::move(params), std::move(stmts), std::move(std::make_unique<PrimitiveType>("rỗng")), line, column};
 }
 
 bao::Token bao::Parser::current() {
@@ -229,8 +234,8 @@ void bao::Parser::skip_newlines() {
     }
 }
 
-std::unique_ptr<bao::StmtNode> bao::Parser::parse_statement() {
-    std::unique_ptr<StmtNode> stmt;
+std::unique_ptr<bao::ast::StmtNode> bao::Parser::parse_statement() {
+    std::unique_ptr<ast::StmtNode> stmt;
     try {
         utils::match(this->current().value,{
             {
@@ -252,19 +257,23 @@ std::unique_ptr<bao::StmtNode> bao::Parser::parse_statement() {
     return stmt;
 }
 
-std::unique_ptr<bao::RetStmt> bao::Parser::parse_retstmt() {
+std::unique_ptr<bao::ast::RetStmt> bao::Parser::parse_retstmt() {
     auto line = this->current().line;
     auto column = this->current().column;
     this->next(); // Consumes 'trả về'
+    if (this->current().type == TokenType::Newline || this->current().type == TokenType::Comma) {
+        this->next(); // Consumes '\n' or ';'
+        return std::make_unique<ast::RetStmt>(nullptr, line, column);
+    }
     try {
-        std::unique_ptr<ExprNode> expr = this->parse_expression();
-        return std::make_unique<RetStmt>(std::move(expr), line, column);
+        std::unique_ptr<ast::ExprNode> expr = this->parse_expression();
+        return std::make_unique<ast::RetStmt>(std::move(expr), line, column);
     } catch ([[maybe_unused]] exception& e) {
         throw;
     }
 }
 
-std::unique_ptr<bao::ExprNode> bao::Parser::parse_expression() {
+std::unique_ptr<bao::ast::ExprNode> bao::Parser::parse_expression() {
     const Token current = this->current();
     const string val = current.value;
     auto line = this->current().line;
@@ -272,13 +281,14 @@ std::unique_ptr<bao::ExprNode> bao::Parser::parse_expression() {
     this->next();
     switch (current.type) {
         case TokenType::Literal:
+
             if (val.contains(".")) {
-                return std::make_unique<NumLitExpr>(
-                    val, PrimitiveType("R64"),
+                return std::make_unique<ast::NumLitExpr>(
+                    val, std::move(std::make_unique<PrimitiveType>("R64")),
                     line, column);
             }
-            return std::make_unique<NumLitExpr>(
-                val, PrimitiveType("Z64"),
+            return std::make_unique<ast::NumLitExpr>(
+                val, std::move(std::make_unique<PrimitiveType>("Z64")),
                 line, column);
         default:
             throw utils::CompilerError::new_error(

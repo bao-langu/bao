@@ -16,6 +16,8 @@ add_executable(${CMAKE_PROJECT_NAME}
         src/filereader/reader.cpp
         src/lexer/lexer.cpp
         src/parser/parser.cpp
+        src/sema/analyzer.cpp
+        src/lexer/maps.cpp
 )
 
 # Get header files

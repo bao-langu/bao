@@ -18,6 +18,11 @@
 #include <sstream>
 
 namespace bao {
+    class Type;
+}
+
+namespace bao::ast {
+    class NumLitExpr;
     class StmtNode;
     struct Program;
     class FuncNode;
@@ -56,13 +61,13 @@ namespace bao::utils {
      * Helper function to print the program
      * @param program The program to print
      */
-    void print_program(const Program& program);
+    void print_program(const ast::Program& program);
 
-    void print_function(const FuncNode& func, const string &padding);
+    void print_function(const ast::FuncNode& func, const string &padding);
 
-    void print_statement(StmtNode* stmt, const string &padding);
+    void print_statement(ast::StmtNode* stmt, const string &padding);
 
-    void print_expression(ExprNode* expr, const string &padding);
+    void print_expression(ast::ExprNode* expr, const string &padding);
 
     /**
      * Helper function for matching a value against a set of patterns
@@ -89,7 +94,7 @@ namespace bao::utils {
 
         [[nodiscard]] const char *what() const noexcept override {
             ostringstream oss;
-            oss << "Số lỗi phát hiện: " << this->exceptions.size() << "\n\n";
+            // oss << "Số lỗi phát hiện: " << this->exceptions.size() << "\n\n";
             for (const auto & i : exceptions) {
                 try {
                     if (i) {
@@ -125,7 +130,7 @@ namespace bao::utils {
            column(column) {
             const Reader reader(std::move(filepath));
             string content = reader.get_line(line);
-            string liner(std::ranges::max(column - 1, 0), '-');
+            string liner(std::ranges::max(column - 1, 0), '~');
             this->message = std::format("{}\n{}^\n[Dòng {}, Cột {}] {}", content, liner, line, column, message);
         }
 
@@ -173,6 +178,10 @@ namespace bao::utils {
             return std::current_exception();
         }
     }
+
+    bool is_literal(ast::ExprNode* expr);
+    bool can_cast_literal(const ast::NumLitExpr* expr, const Type* type);
+    void cast_literal(ast::NumLitExpr* expr, const Type* type);
 }
 
 #endif //UTILS_H
