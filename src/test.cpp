@@ -64,7 +64,7 @@ void semanticsTest() {
         cout << "Phân tích ngữ nghĩa thành công!" << endl;
         bao::utils::print_program(program);
     } catch (const exception& e) {
-        cerr << "Gặp sự cố trong quá trình kiểm tra ngữ nghĩa: " << endl << e.what() << endl;
+        cerr << "Gặp sự cố trong quá trình kiểm tra ngữ nghĩa:\n" << endl << e.what() << endl;
     }
 }
 
@@ -87,8 +87,8 @@ void parserTest() {
         const bao::ast::Program& program = parser.parse_program();
         cout << "Phân tích cú pháp thành công!" << endl;
         bao::utils::print_program(program);
-    } catch (exception& e) {
-        cerr << "Gặp sự cố trong quá trình phân tích cú pháp:" << endl << e.what() << endl;
+    } catch (const exception& e) {
+        cerr << "Gặp sự cố trong quá trình phân tích cú pháp:\n" << endl << e.what() << endl;
     }
 }
 

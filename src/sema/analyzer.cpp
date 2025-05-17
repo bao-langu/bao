@@ -20,15 +20,19 @@ bao::ast::Program bao::Analyzer::analyze_program() {
 
     // Iterate through all functions in the program
     std::vector<exception_ptr> exceptions;
-    try {
-        for (auto& func : program.funcs) {
+    for (auto& func : program.funcs) {
+        try {
             analyze_function(func);
+        } catch (...) {
+            exceptions.emplace_back(std::current_exception());
         }
-    } catch (...) {
-        exceptions.emplace_back(std::current_exception());
     }
     if (!exceptions.empty()) {
-        throw utils::ErrorList(exceptions);
+        const std::string errorMessage = std::format("@{}/{}:\n{}",
+                                                program.path,
+                                                program.name,
+                                                utils::pad_lines(utils::ErrorList(exceptions).what(), "   "));
+        throw std::runtime_error(errorMessage);
     }
     return std::move(program);
 }
@@ -46,15 +50,23 @@ void bao::Analyzer::analyze_function(const ast::FuncNode &func) {
     }
 
     std::vector<exception_ptr> exceptions;
-    try {
-        for (auto& stmt : func.get_stmts()) {
+    for (auto& stmt : func.get_stmts()) {
+        try {
             analyze_statement(localTable, *stmt, func.get_return_type());
+        } catch (...) {
+            exceptions.emplace_back(std::current_exception());
         }
-    } catch (...) {
-        exceptions.emplace_back(std::current_exception());
     }
+
     if (!exceptions.empty()) {
-        throw utils::ErrorList(exceptions);
+        auto [line, column] = func.pos();
+        const std::string errorMessage = std::format("@{} -> {} (Dòng {}, Cột {}):\n{}",
+                                                func.get_name(),
+                                                func.get_return_type()->get_name(),
+                                                line,
+                                                column,
+                                                utils::pad_lines(utils::ErrorList(exceptions).what(), " | "));
+        throw std::runtime_error(errorMessage);
     }
 }
 

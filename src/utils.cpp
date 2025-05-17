@@ -62,7 +62,9 @@ void bao::utils::print_statement(ast::StmtNode* stmt, const string &padding) {
     const auto message = std::format("{} (Dòng {}, Cột {}):", stmt->get_name(), line, column);
     cout << pad_lines(message, padding) << endl;
     if (const auto ret_stmt = dynamic_cast<ast::RetStmt*>(stmt)) {
-        print_expression(ret_stmt->get_val(), padding + "\t");
+        if (ret_stmt->get_val()) {
+            print_expression(ret_stmt->get_val(), padding + "\t");
+        }
     } else {
         cout << padding + "\tBiểu thức không xác định" << endl;
     }

@@ -57,8 +57,11 @@ bao::ast::Program bao::Parser::parse_program() {
                         this->filename, this->directory, "Ký hiệu không xác định", line, column);
             }
         } catch (...) {
-            this->next();
             exceptions.push_back(std::current_exception());
+            if (this->current().type == TokenType::EndOfFile) {
+                break;
+            }
+            this->next();
         }
     }
     if (!exceptions.empty()) {
@@ -123,20 +126,23 @@ bao::ast::FuncNode bao::Parser::parse_function() {
 
     vector<std::unique_ptr<ast::StmtNode>> stmts;
     vector<exception_ptr> exceptions;
-    while (this->current().value != "kết thúc") {
+    while (this->current().value != "kết thúc" || this->current().type != TokenType::EndOfFile) {
         // Ignore newlines
         this->skip_newlines();
-        if (this->current().value == "kết thúc") {
+        if (this->current().value == "kết thúc" || this->current().type == TokenType::EndOfFile) {
             break;
         }
         try {
             stmts.push_back(std::move(this->parse_statement()));
         } catch (...) {
             exceptions.push_back(std::current_exception());
+            if (this->current().type == TokenType::EndOfFile) {
+                break;
+            }
+            this->next();
         }
     }
     if (!exceptions.empty()) {
-        exceptions.insert(exceptions.begin(), utils::make_exception_ptr("Lỗi cú pháp trong câu lệnh:"));
         throw utils::ErrorList(exceptions);
     }
 
@@ -183,20 +189,23 @@ bao::ast::FuncNode bao::Parser::parse_procedure() {
 
     vector<std::unique_ptr<ast::StmtNode>> stmts;
     vector<exception_ptr> exceptions;
-    while (this->current().value != "kết thúc") {
+    while (this->current().value != "kết thúc" || this->current().type != TokenType::EndOfFile) {
         // Ignore newlines
         this->skip_newlines();
-        if (this->current().value == "kết thúc") {
+        if (this->current().value == "kết thúc" || this->current().type == TokenType::EndOfFile) {
             break;
         }
         try {
             stmts.push_back(std::move(this->parse_statement()));
         } catch (...) {
             exceptions.push_back(std::current_exception());
+            if (this->current().type == TokenType::EndOfFile) {
+                break;
+            }
+            this->next();
         }
     }
     if (!exceptions.empty()) {
-        exceptions.insert(exceptions.begin(), utils::make_exception_ptr("Lỗi cú pháp trong câu lệnh:"));
         throw utils::ErrorList(exceptions);
     }
 
@@ -229,7 +238,7 @@ bao::Token bao::Parser::peek() {
 }
 
 void bao::Parser::skip_newlines() {
-    while (this->current().type == TokenType::Newline) {
+    while (this->current().type == TokenType::Newline && this->current().type != TokenType::EndOfFile) {
         this->next();
     }
 }
@@ -240,7 +249,12 @@ std::unique_ptr<bao::ast::StmtNode> bao::Parser::parse_statement() {
         utils::match(this->current().value,{
             {
                 "trả về", [this, &stmt]() {
-                    stmt = this->parse_retstmt();
+                    try {
+                        stmt = this->parse_retstmt();
+                    } catch ([[maybe_unused]] exception& e) {
+                        throw utils::CompilerError::new_error(
+                            this->filename, this->directory, "Lỗi cú pháp trong câu lệnh trả về", this->current().line, this->current().column);
+                    }
                 }
             }
         }, {
@@ -261,7 +275,7 @@ std::unique_ptr<bao::ast::RetStmt> bao::Parser::parse_retstmt() {
     auto line = this->current().line;
     auto column = this->current().column;
     this->next(); // Consumes 'trả về'
-    if (this->current().type == TokenType::Newline || this->current().type == TokenType::Comma) {
+    if (this->current().type == TokenType::Newline || this->current().type == TokenType::Semicolon) {
         this->next(); // Consumes '\n' or ';'
         return std::make_unique<ast::RetStmt>(nullptr, line, column);
     }
@@ -281,7 +295,6 @@ std::unique_ptr<bao::ast::ExprNode> bao::Parser::parse_expression() {
     this->next();
     switch (current.type) {
         case TokenType::Literal:
-
             if (val.contains(".")) {
                 return std::make_unique<ast::NumLitExpr>(
                     val, std::move(std::make_unique<PrimitiveType>("R64")),
