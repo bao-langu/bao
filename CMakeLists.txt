@@ -18,6 +18,7 @@ add_executable(${CMAKE_PROJECT_NAME}
         src/parser/parser.cpp
         src/sema/analyzer.cpp
         src/lexer/maps.cpp
+        src/mir/translator.cpp
 )
 
 # Get header files

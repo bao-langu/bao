@@ -30,13 +30,14 @@ namespace bao {
         R32, // 32-bit float
         R64, // 64-bit float
         Void,
+        Null, // Null type
     };
 
     // --- Primitive type ---
     class PrimitiveType final : public Type {
         Primitive type;
     public:
-        explicit PrimitiveType(const string type) : Type(type), type(primitive_map.at(type)) {}
+        explicit PrimitiveType(const string &type) : Type(type), type(primitive_map.at(type)) {}
         [[nodiscard]] Primitive get_type() const { return type; }
     };
 

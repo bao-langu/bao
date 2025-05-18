@@ -17,7 +17,21 @@
 #include <format>
 #include <sstream>
 
+namespace bao::mir {
+    struct Value;
+    struct Instruction;
+}
+
+namespace bao::mir {
+    struct BasicBlock;
+}
+
 namespace bao {
+    namespace mir {
+        struct Function;
+        struct Module;
+    }
+
     class Type;
 }
 
@@ -57,17 +71,31 @@ namespace bao::utils {
      */
     void print_token(const Token &token);
 
-    /**
-     * Helper function to print the program
-     * @param program The program to print
-     */
-    void print_program(const ast::Program& program);
+    namespace ast {
+        /**
+         * Helper function to print the program
+         * @param program The program to print
+         */
+        void print_program(const bao::ast::Program& program);
 
-    void print_function(const ast::FuncNode& func, const string &padding);
+        void print_function(const bao::ast::FuncNode& func, const string &padding);
 
-    void print_statement(ast::StmtNode* stmt, const string &padding);
+        void print_statement(bao::ast::StmtNode* stmt, const string &padding);
 
-    void print_expression(ast::ExprNode* expr, const string &padding);
+        void print_expression(bao::ast::ExprNode* expr, const string &padding);
+    }
+
+    namespace mir {
+        void print_module(const bao::mir::Module& module);
+
+        void print_function(const bao::mir::Function& func, const string &padding);
+
+        void print_block(const bao::mir::BasicBlock& block, const string &padding);
+
+        void print_instruction(const bao::mir::Instruction* inst, const string &padding);
+
+        void print_value(const bao::mir::Value& value, const string &padding);
+    }
 
     /**
      * Helper function for matching a value against a set of patterns
@@ -131,7 +159,7 @@ namespace bao::utils {
             const Reader reader(std::move(filepath));
             string content = reader.get_line(line);
             string liner(std::ranges::max(column - 1, 0), '~');
-            this->message = std::format("{}\n{}^\n[Dòng {}, Cột {}] {}", content, liner, line, column, message);
+            this->message = std::format("{}\n\033[32m{}^\033[0m\n[Dòng {}, Cột {}] {}", content, liner, line, column, message);
         }
 
         [[nodiscard]] const char* what() const noexcept override {
@@ -179,9 +207,9 @@ namespace bao::utils {
         }
     }
 
-    bool is_literal(ast::ExprNode* expr);
-    bool can_cast_literal(const ast::NumLitExpr* expr, const Type* type);
-    void cast_literal(ast::NumLitExpr* expr, const Type* type);
+    bool is_literal(bao::ast::ExprNode* expr);
+    bool can_cast_literal(const bao::ast::NumLitExpr* expr, const Type* type);
+    void cast_literal(bao::ast::NumLitExpr* expr, const Type* type);
 }
 
 #endif //UTILS_H

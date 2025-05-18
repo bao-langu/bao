@@ -16,6 +16,8 @@
 #include <bao/parser/parser.h>
 #include <bao/sema/analyzer.h>
 
+#include "bao/mir/translator.h"
+
 // --- Using types ---
 using std::cerr;
 using std::cout;
@@ -28,6 +30,7 @@ using icu::UnicodeString;
 using icu::StringCharacterIterator;
 
 // --- Test functions ---
+void mirTest();
 void semanticsTest();
 void parserTest();
 void lexerTest();
@@ -36,8 +39,42 @@ int icuTest();
 
 // Main test function
 int test(int argc, char* argv[]) {
-    semanticsTest();
+    mirTest();
     return 0;
+}
+
+void mirTest() {
+    try {
+        const bao::Reader reader("test.bao");
+        const string source = reader.read();
+        cout << "Nội dung tệp nguồn:" << endl;
+        cout << source << endl;
+        cout << "Đang phân loại ký hiệu..." << endl;
+        bao::Lexer lexer(source);
+        lexer.tokenize();
+        vector<bao::Token> tokens = lexer.get_tokens();
+        for (const auto& token : tokens) {
+            bao::utils::print_token(token);
+        }
+        cout << "\033[33mĐang phân tích cú pháp...\033[0m" << endl;
+        bao::Parser parser("test.bao", ".", tokens);
+        bao::ast::Program program = std::move(parser.parse_program());
+        cout << "\033[32mPhân tích cú pháp thành công!\033[0m" << endl;
+        bao::utils::ast::print_program(program);
+        cout << "\033[33mĐang phân tích ngữ nghĩa...\033[0m" << endl;
+        bao::Analyzer analyzer(std::move(program));
+        program = std::move(analyzer.analyze_program());
+        cout << "\033[32mPhân tích ngữ nghĩa thành công!\033[0m" << endl;
+        bao::utils::ast::print_program(program);
+        cout << "\033[33mĐang dịch sang MIR...\033[0m" << endl;
+        bao::mir::Translator translator(std::move(program));
+        bao::mir::Module mod = std::move(translator.translate());
+        cout << "\033[32mDịch sang MIR thành công!\033[0m" << endl;
+        bao::utils::mir::print_module(mod);
+    } catch (const exception& e) {
+        cout << "\n\033[31mGặp sự cố:\033[0m\n\n";
+        cout << e.what() << endl;
+    }
 }
 
 void semanticsTest() {
@@ -57,14 +94,15 @@ void semanticsTest() {
         bao::Parser parser("test.bao", ".", tokens);
         bao::ast::Program program = std::move(parser.parse_program());
         cout << "Phân tích cú pháp thành công!" << endl;
-        bao::utils::print_program(program);
+        bao::utils::ast::print_program(program);
         cout << "Đang phân tích ngữ nghĩa..." << endl;
         bao::Analyzer analyzer(std::move(program));
         program = std::move(analyzer.analyze_program());
         cout << "Phân tích ngữ nghĩa thành công!" << endl;
-        bao::utils::print_program(program);
+        bao::utils::ast::print_program(program);
     } catch (const exception& e) {
-        cerr << "Gặp sự cố trong quá trình kiểm tra ngữ nghĩa:\n" << endl << e.what() << endl;
+        cout << "\n\033[31mGặp sự cố trong quá trình kiểm tra ngữ nghĩa:\033[0m\n\n";
+        cout << e.what() << endl;
     }
 }
 
@@ -86,7 +124,7 @@ void parserTest() {
         bao::Parser parser("test.bao", ".", tokens);
         const bao::ast::Program& program = parser.parse_program();
         cout << "Phân tích cú pháp thành công!" << endl;
-        bao::utils::print_program(program);
+        bao::utils::ast::print_program(program);
     } catch (const exception& e) {
         cerr << "Gặp sự cố trong quá trình phân tích cú pháp:\n" << endl << e.what() << endl;
     }

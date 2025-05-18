@@ -36,11 +36,12 @@ namespace bao {
 
     const std::unordered_map<string, Primitive> primitive_map = {
         {"N32", Primitive::N32},
-            {"N64", Primitive::N64},
-            {"Z32", Primitive::Z32},
-            {"Z64", Primitive::Z64},
-            {"R32", Primitive::R32},
-            {"R64", Primitive::R64},
+        {"N64", Primitive::N64},
+        {"Z32", Primitive::Z32},
+        {"Z64", Primitive::Z64},
+        {"R32", Primitive::R32},
+        {"R64", Primitive::R64},
         {"rỗng", Primitive::Void},
+        {"null", Primitive::Null}
     };
 }

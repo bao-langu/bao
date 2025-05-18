@@ -1,6 +1,7 @@
 //
 // Created by đỗ quyên on 17/5/25.
 //
+
 #include <bao/sema/analyzer.h>
 
 bao::Analyzer::Analyzer(ast::Program &&program) : program(std::move(program)) {
@@ -28,7 +29,7 @@ bao::ast::Program bao::Analyzer::analyze_program() {
         }
     }
     if (!exceptions.empty()) {
-        const std::string errorMessage = std::format("@{}/{}:\n{}",
+        const std::string errorMessage = std::format("\033[34m@{}/{}:\033[0m\n{}",
                                                 program.path,
                                                 program.name,
                                                 utils::pad_lines(utils::ErrorList(exceptions).what(), "   "));
@@ -60,7 +61,7 @@ void bao::Analyzer::analyze_function(const ast::FuncNode &func) {
 
     if (!exceptions.empty()) {
         auto [line, column] = func.pos();
-        const std::string errorMessage = std::format("@{} -> {} (Dòng {}, Cột {}):\n{}",
+        const std::string errorMessage = std::format("\033[34m@{}\033[0m -> {} (Dòng {}, Cột {}):\n{}",
                                                 func.get_name(),
                                                 func.get_return_type()->get_name(),
                                                 line,
