@@ -14,7 +14,7 @@ Xin chào đến với dự án trình biên dịch Bao!
 Repo này chứa mã nguồn của trình biên dịch. Mục đích cuối cùng của dự án này là có thể "Bao" bọc được các thư viện chương trình C và C++ vào một ngôn ngữ lập trình dễ hơn. Ngôn ngữ mang tính chất giáo dục là chính.
 
 # Tại sao Tiếng Việt?
-- Bởi không có ngôn ngữ lập trình nào (ít nhất thì tôi không biết) mà sử dụng Tiếng Việt cả. Và dự án này sẽ giúp hiểu biết được thêm cách sử lý các ký tự Unicode trong một trình biên dịch và từ khoá nhiều từ.
+- Bởi không có ngôn ngữ lập trình nào (ít nhất thì tôi không biết) mà sử dụng Tiếng Việt cả. Và dự án này sẽ giúp hiểu biết được thêm cách xử lý các ký tự Unicode trong một trình biên dịch và từ khoá nhiều từ.
 
 - Nói chung là ngôn ngữ này có mục đích nghiên cứu và học tập chứ không phải để dùng thường ngày.
 
