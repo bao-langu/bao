@@ -21,8 +21,19 @@ Repo này chứa mã nguồn của trình biên dịch. Mục đích cuối cùn
 # Build
 ![GitHub release](https://img.shields.io/github/v/release/bao-langu/bao)
 
-Dựng dự án bằng cách chạy câu lệnh sau:
+Hướng dẫn build cho máy của mình
 ### macOS và Linux
+Đầu tiên là cài LLVM (backend của trình biên dịch)
+- Đối với macOS bạn hãy cài [Homebrew](https://brew.sh)
+rồi chạy câu lệnh này
+```console
+brew install llvm
+```
+- Đối với Linux thì chạy câu lệnh này
+```console
+bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
+```
+Còn lại thì cả hai đều chạy câu lệnh sau trong terminal
 ```console
 ./unix-setup.sh
 cmake --build build
@@ -31,6 +42,9 @@ cmake --build build
 > [!NOTE] 
 > Chưa chính thức test hoặc hỗ trợ, nếu bạn quen việc tự build làm ơn đóng góp dự án với script cài đặt PowerShell boặc Batch file
 
+Bạn cài LLVM bằng Chocolatey hoặc winget. Mình chưa thử nên không có hướng dẫn ở đây.
+
+Các dependency còn lại thì chạy như sau:
 - Clone repo của [vcpkg](https://github.com/microsoft/vcpkg.git) vào thư mục dự án
 - Chạy script `bootstrap-vcpkg.bat`
 - Chạy lệnh sau:
