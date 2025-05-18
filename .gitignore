@@ -1,5 +1,7 @@
 # Local project folders
 .idea/
+.vscode/
+build/
 cmake-build-debug/
 vcpkg/
 vcpkg_installed/

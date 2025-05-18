@@ -1,0 +1,28 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 31,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "cross-compile",
+      "binaryDir": "${sourceDir}/build",
+      "displayName": "Cross Compile",
+      "description": "Use a toolchain file to cross-compile",
+      "toolchainFile": "vcpkg/scripts/buildsystems/vcpkg.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "Debug",
+      "description": "Debug",
+      "displayName": "Debug",
+      "configurePreset": "cross-compile"      
+    }
+  ]
+}

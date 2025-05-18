@@ -6,17 +6,23 @@
 // --- Included libraries ---
 #include <iostream>
 #include <string>
+
 #include <unicode/unistr.h>
 #include <unicode/normalizer2.h>
 #include <unicode/utypes.h>
 #include <unicode/schriter.h>
+
 #include <bao/filereader/reader.h>
 #include <bao/utils.h>
 #include <bao/lexer/lexer.h>
 #include <bao/parser/parser.h>
 #include <bao/sema/analyzer.h>
+#include <bao/mir/translator.h>
 
-#include "bao/mir/translator.h"
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/Module.h>
+#include <llvm/IR/IRBuilder.h>
+#include <llvm/Support/raw_ostream.h>
 
 // --- Using types ---
 using std::cerr;
@@ -30,6 +36,7 @@ using icu::UnicodeString;
 using icu::StringCharacterIterator;
 
 // --- Test functions ---
+void llvmTest();
 void mirTest();
 void semanticsTest();
 void parserTest();
@@ -40,12 +47,28 @@ int icuTest();
 // Main test function
 int test(int argc, char* argv[]) {
     mirTest();
+    llvmTest();
     return 0;
+}
+
+void llvmTest() {
+    llvm::LLVMContext context;
+    llvm::Module module("bao_test", context);
+    llvm::IRBuilder<> builder(context);
+
+    llvm::FunctionType *funcType = llvm::FunctionType::get(builder.getInt32Ty(), false);
+    llvm::Function *mainFunc = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "main", module);
+    llvm::BasicBlock *entry = llvm::BasicBlock::Create(context, "entry", mainFunc);
+    builder.SetInsertPoint(entry);
+    builder.CreateRet(builder.getInt32(0));
+
+    std::cout << std::endl;
+    module.print(llvm::outs(), nullptr);
 }
 
 void mirTest() {
     try {
-        const bao::Reader reader("test.bao");
+        const bao::Reader reader("test/test.bao");
         const string source = reader.read();
         cout << "Nội dung tệp nguồn:" << endl;
         cout << source << endl;
@@ -57,7 +80,7 @@ void mirTest() {
             bao::utils::print_token(token);
         }
         cout << "\033[33mĐang phân tích cú pháp...\033[0m" << endl;
-        bao::Parser parser("test.bao", ".", tokens);
+        bao::Parser parser("test.bao", "test", tokens);
         bao::ast::Program program = std::move(parser.parse_program());
         cout << "\033[32mPhân tích cú pháp thành công!\033[0m" << endl;
         bao::utils::ast::print_program(program);
@@ -150,7 +173,7 @@ void lexerTest() {
 
 // Test the file reader
 void readerTest() {
-    const bao::Reader reader("test.bao");
+    const bao::Reader reader("../test/test.bao");
     try {
         const string content = reader.read();
         cout << "Full content:" << endl;

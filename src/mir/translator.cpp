@@ -47,13 +47,6 @@ void bao::mir::Translator::translate_statement(Function& func, ast::StmtNode* st
 }
 
 bao::mir::Value bao::mir::Translator::translate_expression(Function& func, ast::StmtNode* stmt, ast::ExprNode* expr) {
-    /* For other expression types that need loading
-    Value value;
-    value.kind = ValueKind::Temporary;
-    value.name = "__temp_var_" + std::to_string(this->temp_var_count[func]++);
-    value.type = std::make_unique<Type>(*func.return_type.get());
-    return std::move(value);
-    */
     if (const auto numlitexpr = dynamic_cast<ast::NumLitExpr*>(expr)) {
         Value value;
         value.kind = ValueKind::Constant;
@@ -61,5 +54,12 @@ bao::mir::Value bao::mir::Translator::translate_expression(Function& func, ast::
         value.type = std::make_unique<Type>(*numlitexpr->get_type());
         return std::move(value);
     }
+    /* For other expression types that need loading
+    Value value;
+    value.kind = ValueKind::Temporary;
+    value.name = "__temp_var_" + std::to_string(this->temp_var_count[func]++);
+    value.type = std::make_unique<Type>(*func.return_type.get());
+    return std::move(value);
+    */
     return {};
 }

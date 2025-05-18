@@ -1,6 +1,15 @@
 cmake_minimum_required(VERSION 3.31)
 project(baoc)
-set(CMAKE_CXX_STANDARD 26)
+set(CMAKE_CXX_STANDARD 23)
+
+# Detect platform
+if(APPLE)
+    set(PLATFORM_DIR "macOS_arm64")
+elseif(UNIX)
+    set(PLATFORM_DIR "linux_x86_64")
+else()
+    message(FATAL_ERROR "Unsupported platform")
+endif()
 
 # For people not using CLion
 set(CMAKE_EXPORT_COMPILE_COMMANDS true)
@@ -21,6 +30,25 @@ add_executable(${CMAKE_PROJECT_NAME}
         src/mir/translator.cpp
 )
 
+# Find llvm-config
+find_program(LLVM_CONFIG_EXECUTABLE llvm-config REQUIRED)
+
+# Get LLVM
+find_package(LLVM REQUIRED CONFIG)
+
+# Check if LLVM was found
+if(NOT LLVM_FOUND)
+    message(FATAL_ERROR "LLVM not found!")
+endif()
+
+message(STATUS "Found LLVM ${LLVM_VERSION}")
+message(STATUS "Using LLVMConfig.cmake in: ${LLVM_CMAKE_DIR}")
+message(STATUS "LLVM include dirs: ${LLVM_INCLUDE_DIRS}")
+message(STATUS "LLVM library dirs: ${LLVM_LIBRARY_DIRS}")
+
+include_directories(${LLVM_INCLUDE_DIRS})
+target_include_directories(baoc PRIVATE ${LLVM_INCLUDE_DIRS})
+
 # Get header files
 target_include_directories(${CMAKE_PROJECT_NAME}
     PRIVATE include
@@ -30,3 +58,20 @@ target_include_directories(${CMAKE_PROJECT_NAME}
 target_link_libraries(${CMAKE_PROJECT_NAME}
     PRIVATE ICU::i18n ICU::uc
 )
+
+llvm_map_components_to_libraries(LLVM_LIBS
+    core
+    support
+    irreader # For reading bitcode
+    asmparser # For parsing textual IR
+    # Add all other components your code uses, e.g.:
+    # analysis
+    # bitwriter
+    # codegen
+    # executionengine
+    # mc
+    # target
+    # transformutils
+)
+
+target_link_libraries(baoc PRIVATE ${LLVM_LIBS})
