@@ -1,6 +1,6 @@
 <div align="center">
   <picture>
-    <img src="./static/images/Bao.png" width="50%">
+    <img src="./static/images/bao_lang.png">
   </picture>
 
   Bao - Ngôn ngữ lập trình Tiếng Việt
