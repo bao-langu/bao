@@ -1,10 +1,8 @@
 # Local project folders
+.cache/
 .idea/
 .vscode/
 build/
 cmake-build-debug/
 vcpkg/
 vcpkg_installed/
-
-# Source files
-*.bao

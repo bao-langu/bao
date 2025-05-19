@@ -1,13 +1,15 @@
 //
 // Created by doqin on 13/05/2025.
 //
+#include "bao/types.h"
 #include <bao/utils.h>
 #include <iostream>
 #include <bao/lexer/maps.h>
 #include <cstring>
 #include <bao/parser/ast.h>
-
-#include "bao/mir/mir.h"
+#include <bao/mir/mir.h>
+#include <memory>
+#include <stdexcept>
 
 using std::cout;
 using std::endl;
@@ -45,9 +47,10 @@ void bao::utils::ast::print_program(const bao::ast::Program &program) {
 
 void bao::utils::ast::print_function(const bao::ast::FuncNode& func, const string &padding) {
     auto [line, column] = func.pos();
+    std::string type = type_to_string(func.get_return_type());
     const auto message = std::format(
-        "Hàm: {} -> {} (Dòng {}, Cột {})",
-        func.get_name(), func.get_return_type()->get_name(),
+        "Hàm: {} -> {}: {} (Dòng {}, Cột {})",
+        func.get_name(), type, func.get_return_type()->get_name(),
         line, column);
     cout << pad_lines(message, padding) << endl;
     for (const auto& stmt_ptr : func.get_stmts()) {
@@ -74,10 +77,12 @@ void bao::utils::ast::print_statement(bao::ast::StmtNode* stmt, const string &pa
 
 void bao::utils::ast::print_expression(bao::ast::ExprNode* expr, const string &padding) {
     auto [line, column] = expr->pos();
+    std::string type = type_to_string(expr->get_type());
     if (const auto num_expr = dynamic_cast<bao::ast::NumLitExpr*>(expr)) {
+
         const auto message = std::format(
-            "Biểu thức số: {} ({}) (Dòng {}, Cột {})",
-            num_expr->get_value(), num_expr->get_type()->get_name(), line, column);
+            "Biểu thức số: {} ({}: {}) (Dòng {}, Cột {})",
+            num_expr->get_value(), type, num_expr->get_type()->get_name(), line, column);
         cout << pad_lines(message, padding) << endl;
     } else {
         cout << padding + "\tBiểu thức không xác định" << endl;
@@ -86,6 +91,8 @@ void bao::utils::ast::print_expression(bao::ast::ExprNode* expr, const string &p
 
 void bao::utils::mir::print_module(const bao::mir::Module &module) {
     cout << "Nội dung module:" << endl;
+    cout << "   Tên: " << module.name << endl;
+    cout << "   Đường dẫn: " << module.path << endl;
     cout << "   Số hàm: " << module.functions.size() << endl;
     for (const auto &func : module.functions) {
         print_function(func, "   ");
@@ -94,7 +101,7 @@ void bao::utils::mir::print_module(const bao::mir::Module &module) {
 
 void bao::utils::mir::print_function(const bao::mir::Function &func, const string &padding) {
     cout << padding + "Hàm: " << func.name << endl;
-    cout << padding + "   Kiểu trả về: " << func.return_type->get_name() << endl;
+    cout << padding + "   Kiểu trả về: " << type_to_string(func.return_type.get()) << ": "<< func.return_type->get_name() << endl;
     /*
     cout << padding + "   Số tham số: " << func.parameters.size() << endl;
     for (const auto &param : func.parameters) {
@@ -154,10 +161,10 @@ void bao::utils::mir::print_value(const bao::mir::Value &value, const string &pa
     cout << padding;
     switch (value.kind) {
         case bao::mir::ValueKind::Constant:
-            cout << "Hằng số: " << value.name;
+            cout << "Hằng số: " << type_to_string(value.type.get()) << ": " << value.name;
             break;
         case bao::mir::ValueKind::Temporary:
-            cout << "Biến tạm thời: " << value.name;
+            cout << "Biến tạm thời: " << type_to_string(value.type.get()) << ": " << value.name;
             break;
         default:
             cout << "Giá trị không xác định";
@@ -201,8 +208,12 @@ bool bao::utils::is_literal(bao::ast::ExprNode* expr) {
     return false;
 }
 
-void bao::utils::cast_literal(bao::ast::NumLitExpr *expr, const Type *type) {
-    expr->set_type(std::move(std::make_unique<Type>(*type)));
+void bao::utils::cast_literal(bao::ast::NumLitExpr *expr, Type *type) {
+    try {
+        expr->set_type(type->clone());
+    } catch (...) {
+        throw std::runtime_error(std::format("Lỗi nội bộ: Không nhận dạng được kiểu chuyển: {}", type->get_name()));
+    }
 }
 
 bool bao::utils::can_cast_literal(const bao::ast::NumLitExpr *expr, const Type *type) {
@@ -234,5 +245,78 @@ bool bao::utils::can_cast_literal(const bao::ast::NumLitExpr *expr, const Type *
             return false;
         default:
             return false;
+    }
+}
+
+llvm::Type* bao::utils::get_llvm_type(llvm::IRBuilder<> &builder, bao::Type* type) {
+    if (auto prim = dynamic_cast<bao::PrimitiveType*>(type)) {
+        switch (prim->get_type()) {
+        // LLVM does not differentiate signed and unsigned types
+        case bao::Primitive::N32:
+        case bao::Primitive::Z32:
+            return builder.getInt32Ty();
+        case bao::Primitive::N64:
+        case bao::Primitive::Z64:
+            return builder.getInt64Ty();
+        case bao::Primitive::R32:
+            return builder.getFloatTy();
+        case bao::Primitive::R64:
+            return builder.getDoubleTy();
+        case bao::Primitive::Void:
+            return builder.getVoidTy();
+        case bao::Primitive::Null:
+            return nullptr;
+        default: // Fallthrough
+            throw std::runtime_error(std::format("-> Lỗi nội bộ: Không thể chuyển kiểu: {}\n | Kiểu nguyên thuỷ không xác định", type->get_name()));
+        }
+    }
+    /*
+    switch (auto temp = static_cast<bao::PrimitiveType*>(type); temp->get_type()) {
+    case bao::Primitive::Z32:
+        cout << "Prim: Z32" << endl;
+    case bao::Primitive::Void:
+        cout << "Prim: Void" << endl;
+    default:
+        cout << "Unaccounted for: " << temp->get_name() << endl;
+    }
+    */
+    throw std::runtime_error(std::format("-> Lỗi nội bộ: Không thể chuyển kiểu: {}", type->get_name()));
+}
+
+llvm::Value* bao::utils::get_llvm_value(llvm::IRBuilder<> &builder, bao::mir::Value &mir_value) {
+    try {
+        switch (mir_value.kind) {
+        case bao::mir::ValueKind::Constant:
+            if (auto numlit = dynamic_cast<bao::PrimitiveType*>(mir_value.type.get())) {
+                auto type = get_llvm_type(builder, numlit);
+                if (type->isIntegerTy(32)) {
+                    return builder.getInt32(std::stoi(mir_value.name));
+                } else if (type->isIntegerTy(64)) {
+                    return builder.getInt64(std::stoi(mir_value.name));
+                } else if (type->isFloatTy()) {
+                    return llvm::ConstantFP::get(builder.getFloatTy(), std::stof(mir_value.name));
+                } else if (type->isDoubleTy()) {
+                    return llvm::ConstantFP::get(builder.getDoubleTy(), std::stod(mir_value.name));
+                } else if (type->isVoidTy()) {
+                    return nullptr;
+                }
+            }
+        case bao::mir::ValueKind::Temporary:
+        case bao::mir::ValueKind::Variable:
+        default:
+        }
+        throw std::runtime_error("Lỗi nội bộ: Không thể tạo giá trị llvm");
+    } catch (std::exception& e) {
+        throw std::runtime_error("Lỗi nội bộ: Không thể tạo giá trị llvm");
+    }
+}
+
+std::string bao::utils::type_to_string(Type *type) {
+    if (auto prim = dynamic_cast<PrimitiveType*>(type)) {
+        return "PrimitiveType";
+    } else if (auto unknown = dynamic_cast<UnknownType*>(type)) {
+        return "Unknown";
+    } else {
+        return "__error";
     }
 }

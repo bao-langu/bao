@@ -6,6 +6,8 @@
 #define MIR_H
 #include <string>
 #include <bao/types.h>
+#include <sys/types.h>
+#include <vector>
 
 namespace bao::mir {
     enum class ValueKind {
@@ -86,9 +88,13 @@ namespace bao::mir {
         std::vector<Value> parameters;
         std::vector<BasicBlock> blocks;
         uint temp_var_count = 0;
+        int line;
+        int column;
     };
 
     struct Module {
+        std::string name;
+        std::string path;
         std::vector<Function> functions;
     };
 }

@@ -1,11 +1,14 @@
 //
 // Created by doqin on 13/05/2025.
 //
+#include "bao/codegen/generator.h"
 #include <bao/test.h>
 
 // --- Included libraries ---
 #include <iostream>
 #include <string>
+#include <filesystem>
+#include <regex>
 
 #include <unicode/unistr.h>
 #include <unicode/normalizer2.h>
@@ -36,6 +39,7 @@ using icu::UnicodeString;
 using icu::StringCharacterIterator;
 
 // --- Test functions ---
+void compilerTest();
 void llvmTest();
 void mirTest();
 void semanticsTest();
@@ -46,9 +50,68 @@ int icuTest();
 
 // Main test function
 int test(int argc, char* argv[]) {
-    mirTest();
-    llvmTest();
+    compilerTest();
     return 0;
+}
+
+void compilerTest() {
+    try {
+        const bao::Reader reader("test/test.bao");
+        const string source = reader.read();
+        cout << "Nội dung tệp nguồn:" << endl;
+        cout << source << endl;
+        cout << "Đang phân loại ký hiệu..." << endl;
+        bao::Lexer lexer(source);
+        lexer.tokenize();
+        vector<bao::Token> tokens = lexer.get_tokens();
+        for (const auto& token : tokens) {
+            bao::utils::print_token(token);
+        }
+        cout << "\033[33mĐang phân tích cú pháp...\033[0m" << endl;
+        bao::Parser parser("test.bao", "test", tokens);
+        bao::ast::Program program = std::move(parser.parse_program());
+        cout << "\033[32mPhân tích cú pháp thành công!\033[0m" << endl;
+        bao::utils::ast::print_program(program);
+        cout << "\033[33mĐang phân tích ngữ nghĩa...\033[0m" << endl;
+        bao::Analyzer analyzer(std::move(program));
+        program = std::move(analyzer.analyze_program());
+        cout << "\033[32mPhân tích ngữ nghĩa thành công!\033[0m" << endl;
+        bao::utils::ast::print_program(program);
+        cout << "\033[33mĐang dịch sang MIR...\033[0m" << endl;
+        bao::mir::Translator translator(std::move(program));
+        bao::mir::Module mod = std::move(translator.translate());
+        cout << "\033[32mDịch sang MIR thành công!\033[0m" << endl;
+        bao::utils::mir::print_module(mod);
+        std::string mod_path = mod.path;
+        std::string mod_file = mod.name;
+        cout << "\033[33mĐang dịch sang LLVM IR...\033[0m" << endl;
+        bao::Generator gen(std::move(mod));
+        gen.generate();
+        cout << "\033[32mDịch sang LLVM IR thành công!\033[0m" << endl;
+        gen.print_source();
+        std::filesystem::path curr = std::filesystem::current_path();
+        std::filesystem::path dir(mod_path);
+        std::filesystem::path file(mod_file + ".bc");
+        std::filesystem::path fullpath = curr/dir/file;
+
+        int result = gen.write_to_file(fullpath.string());
+        if (result != 0) {
+            std::cerr << "Gặp sự cố viết IR ra bitcode\n";
+            return;
+        }
+
+        std::string output = std::regex_replace(mod_file, std::regex(".bao"), "");
+        std::string command = std::format("clang {} -o {}", fullpath.string(), (curr / dir).string() + "/" + output);
+
+        result = std::system(command.c_str());
+        if (result != 0) {
+            std::cerr << "Gặp sự cố biên dịch bitcode\n";
+            return;
+        }
+    } catch (const exception& e) {
+        cout << "\n\033[31mGặp sự cố:\033[0m\n\n";
+        cout << e.what() << endl;
+    }
 }
 
 void llvmTest() {

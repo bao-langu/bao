@@ -16,8 +16,8 @@ namespace bao {
         ast::Program analyze_program();
     private:
         void analyze_function(const ast::FuncNode& func);
-        void analyze_statement(sema::SymbolTable& parentTable, ast::StmtNode& stmt, const Type* return_type);
-        void analyze_expression(sema::SymbolTable& parentTable, ast::ExprNode& expr);
+        void analyze_statement(sema::SymbolTable& parentTable, ast::StmtNode* stmt, Type* return_type);
+        void analyze_expression(sema::SymbolTable& parentTable, ast::ExprNode* expr);
     };
 
 }

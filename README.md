@@ -26,15 +26,15 @@ Hướng dẫn build cho máy của mình
 Đầu tiên là cài LLVM (backend của trình biên dịch)
 - Đối với macOS bạn hãy cài [Homebrew](https://brew.sh)
 rồi chạy câu lệnh này
-```console
+```
 brew install llvm
 ```
 - Đối với Linux thì chạy câu lệnh này
-```console
+```
 bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
 ```
 Còn lại thì cả hai đều chạy câu lệnh sau trong terminal
-```console
+```
 ./unix-setup.sh
 cmake --build build
 ```
@@ -48,7 +48,7 @@ Các dependency còn lại thì chạy như sau:
 - Clone repo của [vcpkg](https://github.com/microsoft/vcpkg.git) vào thư mục dự án
 - Chạy script `bootstrap-vcpkg.bat`
 - Chạy lệnh sau:
-```console
+```
 vcpkg/vcpkg install
 cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE="vcpkg/scripts/buildsystems/vcpkg.cmake"
 cmake --build build
@@ -63,5 +63,4 @@ Làm ơn đóng góp vào dự án nếu bạn tìm thấy bug , điểm yếu, 
 ![License](https://img.shields.io/github/license/bao-langu/bao)
 
 Dự án Bao được xuất bản với giấy phép Apache-2.0.
-
 Đọc thêm tại đây [LICENSE-APACHE](LICENSE)

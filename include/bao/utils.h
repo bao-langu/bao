@@ -16,6 +16,7 @@
 #include <functional>
 #include <format>
 #include <sstream>
+#include <llvm/IR/IRBuilder.h>
 
 namespace bao::mir {
     struct Value;
@@ -209,7 +210,14 @@ namespace bao::utils {
 
     bool is_literal(bao::ast::ExprNode* expr);
     bool can_cast_literal(const bao::ast::NumLitExpr* expr, const Type* type);
-    void cast_literal(bao::ast::NumLitExpr* expr, const Type* type);
+    void cast_literal(bao::ast::NumLitExpr* expr, Type* type);
+
+    llvm::Type* get_llvm_type(llvm::IRBuilder<>& builder, bao::Type* type);
+    llvm::Value* get_llvm_value(llvm::IRBuilder<>& builder, bao::mir::Value& mir_value);
+
+    std::string type_to_string(Type* type);
+
+    std::unique_ptr<Type> clone_type(Type* type);
 }
 
 #endif //UTILS_H

@@ -28,6 +28,7 @@ add_executable(${CMAKE_PROJECT_NAME}
         src/sema/analyzer.cpp
         src/lexer/maps.cpp
         src/mir/translator.cpp
+        src/codegen/generator.cpp
 )
 
 # Find llvm-config
@@ -66,7 +67,7 @@ llvm_map_components_to_libraries(LLVM_LIBS
     asmparser # For parsing textual IR
     # Add all other components your code uses, e.g.:
     # analysis
-    # bitwriter
+    bitwriter
     # codegen
     # executionengine
     # mc

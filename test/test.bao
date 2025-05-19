@@ -1,0 +1,7 @@
+hàm chính() -> Z32
+    trả về 0
+kết thúc
+
+thủ tục test()
+    trả về
+kết thúc

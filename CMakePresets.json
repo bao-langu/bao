@@ -22,7 +22,7 @@
       "name": "Debug",
       "description": "Debug",
       "displayName": "Debug",
-      "configurePreset": "cross-compile"      
+      "configurePreset": "cross-compile"
     }
   ]
 }

@@ -5,6 +5,8 @@
 #ifndef TYPES_H
 #define TYPES_H
 
+#include <memory>
+#include <stdexcept>
 #include <string>
 #include <utility>
 
@@ -20,6 +22,7 @@ namespace bao {
         explicit Type(string name) : name(std::move(name)) {}
         virtual ~Type() = default;
         [[nodiscard]] string get_name() const { return name; }
+        virtual std::unique_ptr<Type> clone() const = 0;
     };
 
     enum class Primitive {
@@ -29,7 +32,7 @@ namespace bao {
         Z64, // 64-bit signed integer
         R32, // 32-bit float
         R64, // 64-bit float
-        Void,
+        Void, // Void
         Null, // Null type
     };
 
@@ -39,11 +42,17 @@ namespace bao {
     public:
         explicit PrimitiveType(const string &type) : Type(type), type(primitive_map.at(type)) {}
         [[nodiscard]] Primitive get_type() const { return type; }
+        std::unique_ptr<Type> clone() const {
+            return std::make_unique<PrimitiveType>(*this);
+        }
     };
 
     class UnknownType final : public Type {
     public:
         explicit UnknownType() : Type("unknown") {}
+        std::unique_ptr<Type> clone() const {
+            throw std::runtime_error("Không thể clone kiểu Unknown");
+        }
     };
 }
 #endif //TYPES_H

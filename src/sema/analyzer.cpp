@@ -3,6 +3,7 @@
 //
 
 #include <bao/sema/analyzer.h>
+#include <exception>
 
 bao::Analyzer::Analyzer(ast::Program &&program) : program(std::move(program)) {
     this->symbolTable = sema::SymbolTable();
@@ -53,7 +54,7 @@ void bao::Analyzer::analyze_function(const ast::FuncNode &func) {
     std::vector<exception_ptr> exceptions;
     for (auto& stmt : func.get_stmts()) {
         try {
-            analyze_statement(localTable, *stmt, func.get_return_type());
+            analyze_statement(localTable, stmt.get(), func.get_return_type());
         } catch (...) {
             exceptions.emplace_back(std::current_exception());
         }
@@ -71,12 +72,12 @@ void bao::Analyzer::analyze_function(const ast::FuncNode &func) {
     }
 }
 
-void bao::Analyzer::analyze_statement(sema::SymbolTable &parentTable, ast::StmtNode &stmt, const Type* return_type) {
-    if (const auto* retStmt = dynamic_cast<ast::RetStmt*>(&stmt)) {
+void bao::Analyzer::analyze_statement(sema::SymbolTable &parentTable, ast::StmtNode* stmt, Type* return_type) {
+    if (const auto* retStmt = dynamic_cast<ast::RetStmt*>(stmt)) {
         // Analyze return statement
         if (retStmt->get_val()) {
             try {
-                analyze_expression(parentTable, *retStmt->get_val());
+                analyze_expression(parentTable, retStmt->get_val());
             } catch (...) {
                 auto [line, column] = retStmt->get_val()->pos();
                 throw utils::CompilerError::new_error(program.name, program.path, "Biểu thức không xác định", line, column);
@@ -101,7 +102,11 @@ void bao::Analyzer::analyze_statement(sema::SymbolTable &parentTable, ast::StmtN
                     throw utils::CompilerError::new_error(program.name, program.path, "Kiểu trả về khác kiểu trả về của hàm", line, column);
                 }
                 // Cast the expression to the function's return type
-                utils::cast_literal(numExpr, return_type);
+                try {
+                    utils::cast_literal(numExpr, return_type);
+                } catch ([[maybe_unused]] std::exception& e) {
+                    throw;
+                }
             }
         } else if (retStmt->get_val()) {
             // If the function return type is "rỗng", but a value is returned
@@ -110,13 +115,13 @@ void bao::Analyzer::analyze_statement(sema::SymbolTable &parentTable, ast::StmtN
         }
     } else {
         // Handle other statement types
-        auto [line, column] = stmt.pos();
+        auto [line, column] = stmt->pos();
         throw utils::CompilerError::new_error(program.name, program.path, "Câu lệnh không xác định", line, column);
     }
 }
 
-void bao::Analyzer::analyze_expression(sema::SymbolTable &parentTable, ast::ExprNode &expr) {
-    if (dynamic_cast<ast::NumLitExpr*>(&expr)) {
+void bao::Analyzer::analyze_expression(sema::SymbolTable &parentTable, ast::ExprNode* expr) {
+    if (dynamic_cast<ast::NumLitExpr*>(expr)) {
         // Analyze number literal expression
         // No action needed for number literals
     } else {
