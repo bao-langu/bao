@@ -14,9 +14,6 @@ endif()
 # For people not using CLion
 set(CMAKE_EXPORT_COMPILE_COMMANDS true)
 
-# Find ICU (request common components)
-find_package(ICU REQUIRED COMPONENTS i18n uc)
-
 # Add source files
 add_executable(${CMAKE_PROJECT_NAME}
         main.cpp
@@ -31,8 +28,8 @@ add_executable(${CMAKE_PROJECT_NAME}
         src/codegen/generator.cpp
 )
 
-# Find llvm-config
-find_program(LLVM_CONFIG_EXECUTABLE llvm-config REQUIRED)
+# Find ICU (request common components)
+find_package(ICU REQUIRED COMPONENTS i18n uc)
 
 # Get LLVM
 find_package(LLVM REQUIRED CONFIG)
@@ -49,6 +46,7 @@ message(STATUS "LLVM library dirs: ${LLVM_LIBRARY_DIRS}")
 
 include_directories(${LLVM_INCLUDE_DIRS})
 target_include_directories(baoc PRIVATE ${LLVM_INCLUDE_DIRS})
+add_definitions(${LLVM_DEFINITIONS})
 
 # Get header files
 target_include_directories(${CMAKE_PROJECT_NAME}
@@ -60,19 +58,38 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
     PRIVATE ICU::i18n ICU::uc
 )
 
+if(FALSE)
+    # Get LLD
+    find_package(LLD REQUIRED CONFIG)
+
+    if(NOT LLD_FOUND)
+        message(FATAL_ERROR "LLD not found!")
+    endif()
+
+    target_link_libraries(${CMAKE_PROJECT_NAME}
+        PRIVATE
+            lldCommon
+            lldELF
+            lldMachO
+            lldCOFF
+            lldMinGW
+            lldWasm
+    )
+endif()
+
 llvm_map_components_to_libraries(LLVM_LIBS
     core
     support
-    irreader # For reading bitcode
-    asmparser # For parsing textual IR
-    # Add all other components your code uses, e.g.:
-    # analysis
+    irreader 
+    asmparser
+    analysis
     bitwriter
-    # codegen
-    # executionengine
-    # mc
-    # target
-    # transformutils
+    codegen
+    executionengine
+    mc
+    target
+    transformutils
+    native
 )
 
 target_link_libraries(baoc PRIVATE ${LLVM_LIBS})

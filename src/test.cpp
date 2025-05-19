@@ -91,23 +91,41 @@ void compilerTest() {
         gen.print_source();
         std::filesystem::path curr = std::filesystem::current_path();
         std::filesystem::path dir(mod_path);
-        std::filesystem::path file(mod_file + ".bc");
+        std::string output = std::regex_replace(mod_file, std::regex(".bao"), "");
+        std::filesystem::path file(output + ".o");
         std::filesystem::path fullpath = curr/dir/file;
 
-        int result = gen.write_to_file(fullpath.string());
+        int result = gen.create_object(fullpath.string());
         if (result != 0) {
             std::cerr << "Gặp sự cố viết IR ra bitcode\n";
             return;
         }
+        std::string final = (curr / dir).string() + "/" + output;
 
-        std::string output = std::regex_replace(mod_file, std::regex(".bao"), "");
-        std::string command = std::format("clang {} -o {}", fullpath.string(), (curr / dir).string() + "/" + output);
-
+        #ifdef __APPLE__
+        std::string command = std::format("ld {} -o {} -lSystem -syslibroot $(xcrun --show-sdk-path) -e _main", fullpath.string(), final);
         result = std::system(command.c_str());
         if (result != 0) {
             std::cerr << "Gặp sự cố biên dịch bitcode\n";
             return;
         }
+        #else
+        // FIXME: Add support for UNIX and Windows later
+        /*
+        std::vector<const char*> args = { // For UNIX
+            "ld.lld",
+            fullpath.c_str(),
+            "-o",
+            final.c_str()
+        };
+
+        int success = bao::utils::link_obj(args);
+        if (success != 0) {
+            std::cerr << "Gặp sự cố link tệp obj" << std::endl;
+            return;
+        }
+        */
+        #endif
     } catch (const exception& e) {
         cout << "\n\033[31mGặp sự cố:\033[0m\n\n";
         cout << e.what() << endl;

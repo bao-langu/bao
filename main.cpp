@@ -4,6 +4,7 @@
 
 // --- Main program ---
 int main(const int argc, char *argv[]) {
+
     if (argc < 2) {
         throw std::invalid_argument("Cú pháp: baoc [--test] [--huong-dan]");
     }

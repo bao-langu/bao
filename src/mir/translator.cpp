@@ -31,7 +31,11 @@ bao::mir::Module bao::mir::Translator::translate() {
 
 bao::mir::Function bao::mir::Translator::translate_function(const ast::FuncNode& func) {
     Function function;
-    function.name = func.get_name() == "chính" ? "main" : func.get_name();
+    std::string main_sym = "main";
+    #ifdef __APPLE__
+        main_sym = "_main";
+    #endif
+    function.name = func.get_name() == "chính" ? main_sym : func.get_name();
     try {
         function.return_type = func.get_return_type()->clone();
     } catch ([[maybe_unused]] std::exception& e) {
@@ -41,7 +45,7 @@ bao::mir::Function bao::mir::Translator::translate_function(const ast::FuncNode&
     function.line = line;
     function.column = column;
     // Fall back in case of wrong main semantics
-    if (function.name == "main" && function.return_type->get_name() != "Z32") {
+    if (function.name == main_sym && function.return_type->get_name() != "Z32") {
         auto [line, column] = func.pos();
         throw utils::CompilerError::new_error(
             program.name, program.path, 

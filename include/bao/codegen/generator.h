@@ -17,7 +17,7 @@ namespace bao {
         Generator(bao::mir::Module&& mir_module);
         void generate();
         void print_source();
-        int write_to_file(const std::string& filename);
+        int create_object(const std::string& filename);
     private:
         void generate_function(bao::mir::Function& mir_func);
         void generate_block(llvm::BasicBlock* ir_block, bao::mir::BasicBlock& mir_block);

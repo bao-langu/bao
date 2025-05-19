@@ -11,6 +11,9 @@
 #include <memory>
 #include <stdexcept>
 
+// Include LLD Common driver header
+#include <lld/Common/Driver.h>
+
 using std::cout;
 using std::endl;
 using std::istringstream;
@@ -270,16 +273,6 @@ llvm::Type* bao::utils::get_llvm_type(llvm::IRBuilder<> &builder, bao::Type* typ
             throw std::runtime_error(std::format("-> Lỗi nội bộ: Không thể chuyển kiểu: {}\n | Kiểu nguyên thuỷ không xác định", type->get_name()));
         }
     }
-    /*
-    switch (auto temp = static_cast<bao::PrimitiveType*>(type); temp->get_type()) {
-    case bao::Primitive::Z32:
-        cout << "Prim: Z32" << endl;
-    case bao::Primitive::Void:
-        cout << "Prim: Void" << endl;
-    default:
-        cout << "Unaccounted for: " << temp->get_name() << endl;
-    }
-    */
     throw std::runtime_error(std::format("-> Lỗi nội bộ: Không thể chuyển kiểu: {}", type->get_name()));
 }
 
@@ -320,3 +313,18 @@ std::string bao::utils::type_to_string(Type *type) {
         return "__error";
     }
 }
+
+/*
+
+LLD_HAS_DRIVER(coff)
+LLD_HAS_DRIVER(elf)
+LLD_HAS_DRIVER(mingw)
+LLD_HAS_DRIVER(macho)
+LLD_HAS_DRIVER(wasm)
+
+int bao::utils::link_obj(std::vector<const char *> &args) {
+    lld::Result res = lld::lldMain(args, llvm::outs(), llvm::errs(), LLD_ALL_DRIVERS);
+    return res.retCode;
+}
+
+*/

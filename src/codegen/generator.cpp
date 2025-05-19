@@ -6,6 +6,13 @@
 #include <llvm/Bitcode/BitcodeWriter.h>
 #include <llvm/Support/raw_os_ostream.h>
 #include <llvm/Support/FileSystem.h>
+#include <llvm/Support/TargetSelect.h>
+#include <llvm/Target/TargetOptions.h>
+#include <llvm/Target/TargetMachine.h>
+#include <llvm/Support/TargetSelect.h>
+#include <llvm/TargetParser/Host.h>
+#include <llvm/MC/TargetRegistry.h>
+#include <llvm/IR/LegacyPassManager.h>
 #include <iostream>
 
 bao::Generator::Generator(bao::mir::Module&& mir_module
@@ -31,18 +38,36 @@ void bao::Generator::print_source() {
     this->llvm_module.print(llvm::outs(), nullptr);
 }
 
-int bao::Generator::write_to_file(const std::string& filename) {
+int bao::Generator::create_object(const std::string& filename) {
+    llvm::InitializeNativeTarget();
+    llvm::InitializeNativeTargetAsmParser();
+    llvm::InitializeNativeTargetAsmPrinter();
+    llvm::InitializeNativeTargetDisassembler();
+
+    auto targetTriple = llvm::sys::getDefaultTargetTriple();
+    std::string error;
+    const auto* target = llvm::TargetRegistry::lookupTarget(targetTriple, error);
+    if (!error.empty()) {
+        std::cerr << error << "\n";
+        return 1;
+    }
+    llvm::TargetOptions opt;
+    auto RM = std::optional<llvm::Reloc::Model>();
+    auto targetMachine = 
+        target->createTargetMachine(targetTriple, "generic", "", opt, RM);
+
     std::error_code EC;
     std::cout << "Đã lưu tại: " << filename << std::endl;
-    llvm::raw_fd_ostream outFile(filename, EC, llvm::sys::fs::OF_None);
-
+    llvm::raw_fd_ostream dest(filename, EC, llvm::sys::fs::OF_None);
     if (EC) {
         llvm::errs() << "Gặp sự cố mở tệp: " << EC.message() << "\n";
         return 1;
     }
-    
-    llvm::WriteBitcodeToFile(this->llvm_module, outFile);
-    outFile.flush();
+    llvm::legacy::PassManager pass;
+    targetMachine->addPassesToEmitFile(pass, dest, nullptr, llvm::CodeGenFileType::ObjectFile);
+    pass.run(this->llvm_module);
+    dest.flush();
+    // llvm::WriteBitcodeToFile(this->llvm_module, outFile);
     return 0;
 }
 
