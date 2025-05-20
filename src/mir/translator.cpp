@@ -31,8 +31,8 @@ bao::mir::Module bao::mir::Translator::translate() {
 
 bao::mir::Function bao::mir::Translator::translate_function(const ast::FuncNode& func) {
     Function function;
-    std::string main_sym = "main";
-    #ifdef __APPLE__
+    std::string main_sym = "main"; // For most platforms
+    #ifdef __APPLE__ // Apple specific symbol
         main_sym = "_main";
     #endif
     function.name = func.get_name() == "chính" ? main_sym : func.get_name();

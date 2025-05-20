@@ -7,7 +7,7 @@
 </div>
 
 # Ngôn ngữ lập trình Bao
-![Status](https://img.shields.io/badge/status-WIP-orange) ![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS-blue) ![Platform](https://img.shields.io/badge/platform-windows-red) ![Powered by LLVM](https://img.shields.io/badge/powered%20by-LLVM-darkgreen) ![GitHub stars](https://img.shields.io/github/stars/bao-langu/bao?style=social)
+![Status](https://img.shields.io/badge/status-WIP-orange) ![Powered by LLVM](https://img.shields.io/badge/powered%20by-LLVM-darkgreen) ![GitHub stars](https://img.shields.io/github/stars/bao-langu/bao?style=social)
 
 Xin chào đến với dự án trình biên dịch Bao!
 
@@ -19,10 +19,11 @@ Repo này chứa mã nguồn của trình biên dịch. Mục đích cuối cùn
 - Nói chung là ngôn ngữ này có mục đích nghiên cứu và học tập chứ không phải để dùng thường ngày.
 
 # Build
-![GitHub release](https://img.shields.io/github/v/release/bao-langu/bao)
+![GitHub release](https://img.shields.io/github/v/release/bao-langu/bao) ![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS-blue) ![Platform](https://img.shields.io/badge/platform-windows-red)
 
 Hướng dẫn build cho máy của mình
 ### macOS và Linux
+
 Đầu tiên là cài LLVM (backend của trình biên dịch)
 - Đối với macOS bạn hãy cài [Homebrew](https://brew.sh)
 rồi chạy câu lệnh này
