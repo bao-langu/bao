@@ -11,9 +11,6 @@
 #include <memory>
 #include <stdexcept>
 
-// Include LLD Common driver header
-#include <lld/Common/Driver.h>
-
 using std::cout;
 using std::endl;
 using std::istringstream;
@@ -297,6 +294,7 @@ llvm::Value* bao::utils::get_llvm_value(llvm::IRBuilder<> &builder, bao::mir::Va
         case bao::mir::ValueKind::Temporary:
         case bao::mir::ValueKind::Variable:
         default:
+            ;
         }
         throw std::runtime_error("Lỗi nội bộ: Không thể tạo giá trị llvm");
     } catch (std::exception& e) {

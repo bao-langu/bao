@@ -31,8 +31,9 @@ rồi chạy câu lệnh này
 brew install llvm
 ```
 - Đối với Linux thì chạy câu lệnh này
+- (Mới thử trên ubuntu/debian, có thể phải resolve nhiều thứ nếu không cẩn thận)
 ```
-bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
+sudo apt install llvm llvm-18-dev libllvm18
 ```
 Còn lại thì cả hai đều chạy câu lệnh sau trong terminal
 ```

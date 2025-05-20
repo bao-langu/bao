@@ -14,6 +14,7 @@ fi
 "$VCPKG_DIR/vcpkg" install
 
 # Generate build files
+echo "Setting up cmake..."
 cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE="$TOOLCHAIN_FILE"
 
 echo "Setup complete. Run 'cmake --build build' to compile."
