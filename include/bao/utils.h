@@ -219,9 +219,7 @@ namespace bao::utils {
 
     std::unique_ptr<Type> clone_type(Type* type);
 
-    /*
-    int link_obj(std::vector<const char*>& args);
-    */
+    int generate_start();
 }
 
 #endif //UTILS_H

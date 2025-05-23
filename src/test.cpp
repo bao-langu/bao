@@ -39,6 +39,7 @@ using icu::UnicodeString;
 using icu::StringCharacterIterator;
 
 // --- Test functions ---
+void linuxStartTest();
 void compilerTest();
 void llvmTest();
 void mirTest();
@@ -54,12 +55,18 @@ int test(int argc, char* argv[]) {
     return 0;
 }
 
+void linuxStartTest() {
+    bao::utils::generate_start();
+}
+
+
 void compilerTest() {
     try {
         const bao::Reader reader("test/test.bao");
         const string source = reader.read();
         cout << "Nội dung tệp nguồn:" << endl;
         cout << source << endl;
+
         cout << "Đang phân loại ký hiệu..." << endl;
         bao::Lexer lexer(source);
         lexer.tokenize();
@@ -67,16 +74,19 @@ void compilerTest() {
         for (const auto& token : tokens) {
             bao::utils::print_token(token);
         }
+
         cout << "\033[33mĐang phân tích cú pháp...\033[0m" << endl;
         bao::Parser parser("test.bao", "test", tokens);
         bao::ast::Program program = std::move(parser.parse_program());
         cout << "\033[32mPhân tích cú pháp thành công!\033[0m" << endl;
         bao::utils::ast::print_program(program);
+
         cout << "\033[33mĐang phân tích ngữ nghĩa...\033[0m" << endl;
         bao::Analyzer analyzer(std::move(program));
         program = std::move(analyzer.analyze_program());
         cout << "\033[32mPhân tích ngữ nghĩa thành công!\033[0m" << endl;
         bao::utils::ast::print_program(program);
+
         cout << "\033[33mĐang dịch sang MIR...\033[0m" << endl;
         bao::mir::Translator translator(std::move(program));
         bao::mir::Module mod = std::move(translator.translate());
@@ -84,6 +94,7 @@ void compilerTest() {
         bao::utils::mir::print_module(mod);
         std::string mod_path = mod.path;
         std::string mod_file = mod.name;
+
         cout << "\033[33mĐang dịch sang LLVM IR...\033[0m" << endl;
         bao::Generator gen(std::move(mod));
         gen.generate();
@@ -92,7 +103,13 @@ void compilerTest() {
         std::filesystem::path curr = std::filesystem::current_path();
         std::filesystem::path dir(mod_path);
         std::string output = std::regex_replace(mod_file, std::regex(".bao"), "");
-        std::filesystem::path file(output + ".o");
+
+        std::string dot_o = ".o";
+        #if defined(WINDOWS)
+            dot_o = ".obj";
+        #endif
+
+        std::filesystem::path file(output + dot_o);
         std::filesystem::path fullpath = curr/dir/file;
 
         int result = gen.create_object(fullpath.string());
@@ -102,29 +119,48 @@ void compilerTest() {
         }
         std::string final = (curr / dir).string() + "/" + output;
 
-        #ifdef __APPLE__
-        std::string command = std::format("ld {} -o {} -lSystem -syslibroot $(xcrun --show-sdk-path) -e _main", fullpath.string(), final);
-        result = std::system(command.c_str());
-        if (result != 0) {
-            std::cerr << "Gặp sự cố biên dịch bitcode\n";
-            return;
-        }
-        #else
-        // FIXME: Add support for UNIX and Windows later
-        /*
-        std::vector<const char*> args = { // For UNIX
-            "ld.lld",
-            fullpath.c_str(),
-            "-o",
-            final.c_str()
-        };
+        #if defined(MACOS)
+            #if defined(__x86_64__) || defined(_M_X64) // Tested for ARM64 (M series) Apple devices
+                std::cout << "Xin lỗi! Trình biên dịch không hỗ trợ hệ thống của bạn!"
+            #elif defined(__aarch64__) || defined(_M_X64)
+                std::string command = 
+                    std::format("ld {} -o {} -lSystem -syslibroot $(xcrun --show-sdk-path) -e _main",
+                                fullpath.string(),
+                                final);
+                
+                result = std::system(command.c_str());
+                if (result != 0) {
+                    std::cerr << "Gặp sự cố trong quá trình linking\n";
+                    return;
+                }
+            #else
+                std::cout << "Xin lỗi! Trình biên dịch không hỗ trợ hệ thống của bạn!"
+            #endif
+        #elif defined(linux) 
+            #if defined(__x86_64__) || defined(_M_X64) // Tested for x86_64 Linux
+                // Create _start symbol for linux
+                if (!std::filesystem::exists("_start.o")) {
+                    bao::utils::generate_start();
+                }
+                
+                // Link that bad boy hehe
+                std::string command = 
+                    std::format("ld _start.o {} -lc -o {}", fullpath.string(), final) 
+                                +  " -dynamic-linker $(ldd /bin/ls | grep 'ld-linux' | awk '{print $1}') \
+                                    -L$(dirname $(ldd /bin/ls | grep 'libc.so.*' | awk '{print $3}'))";
 
-        int success = bao::utils::link_obj(args);
-        if (success != 0) {
-            std::cerr << "Gặp sự cố link tệp obj" << std::endl;
-            return;
-        }
-        */
+                result = std::system(command.c_str());
+                if (result != 0) {
+                    std::cerr << "Gặp sự cố trong quá trình linking\n";
+                    return;
+                }
+            #elif defined(__aarch64__) || defined(_M_X64)
+                std::cout << "Trình biên dịch chưa hỗ trợ arm64 cho Linux"
+            #else
+                std::cout << "Xin lỗi! Trình biên dịch không hỗ trợ hệ thống của bạn!"
+            #endif
+        #elif defined(WINDOWS)
+            std::cout << "Trình biên dịch chưa hỗ trợ Windows";
         #endif
     } catch (const exception& e) {
         cout << "\n\033[31mGặp sự cố:\033[0m\n\n";

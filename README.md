@@ -4,11 +4,11 @@
   </picture>
 
   Bao - Ngôn ngữ lập trình Tiếng Việt
+
+  ![Status](https://img.shields.io/badge/status-WIP-orange) ![Powered by LLVM](https://img.shields.io/badge/powered%20by-LLVM-darkgreen) ![GitHub stars](https://img.shields.io/github/stars/bao-langu/bao?style=social)
 </div>
 
 # Ngôn ngữ lập trình Bao
-![Status](https://img.shields.io/badge/status-WIP-orange) ![Powered by LLVM](https://img.shields.io/badge/powered%20by-LLVM-darkgreen) ![GitHub stars](https://img.shields.io/github/stars/bao-langu/bao?style=social)
-
 Xin chào đến với dự án trình biên dịch Bao!
 
 Repo này chứa mã nguồn của trình biên dịch. Mục đích cuối cùng của dự án này là có thể "Bao" bọc được các thư viện chương trình C và C++ vào một ngôn ngữ lập trình dễ hơn. Ngôn ngữ mang tính chất giáo dục là chính.
@@ -64,5 +64,6 @@ Làm ơn đóng góp vào dự án nếu bạn tìm thấy bug , điểm yếu, 
 # License
 ![License](https://img.shields.io/github/license/bao-langu/bao)
 
-Dự án Bao được xuất bản với giấy phép Apache-2.0.
-Đọc thêm tại đây [LICENSE-APACHE](LICENSE)
+Dự án Bao nằm dưới giấy phép Apache-2.0. Đọc thêm tại đây: [LICENSE-APACHE](LICENSE)
+
+Phần mềm này đi kèm với bộ phận của dự án LLVM mà nằm dưới giấy phép Apache License 2.0 with LLVM Exceptions. Đọc thêm tại đây: [LICENSE-LLVM](LICENSE-LLVM.txt)

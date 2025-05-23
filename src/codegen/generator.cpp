@@ -54,7 +54,12 @@ int bao::Generator::create_object(const std::string& filename) {
     llvm::TargetOptions opt;
     auto RM = std::optional<llvm::Reloc::Model>();
     auto targetMachine = 
-        target->createTargetMachine(targetTriple, "generic", "", opt, RM);
+        target->createTargetMachine(
+            targetTriple, 
+            "generic", 
+            "", 
+            opt, 
+            RM);
 
     std::error_code EC;
     std::cout << "Đã lưu tại: " << filename << std::endl;
@@ -93,7 +98,11 @@ void bao::Generator::generate_function(mir::Function& mir_func) {
         std::vector<exception_ptr> exceptions;
         for (auto& mir_block : mir_func.blocks) {    
             try {
-                llvm::BasicBlock *ir_block = llvm::BasicBlock::Create(this->context, mir_block.label, ir_func);
+                llvm::BasicBlock *ir_block = 
+                    llvm::BasicBlock::Create(
+                        this->context, 
+                        mir_block.label, 
+                        ir_func);
                 this->generate_block(ir_block, mir_block);
             } catch (...) {
                 exceptions.push_back(std::current_exception());

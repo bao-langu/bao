@@ -1,13 +1,26 @@
 //
 // Created by doqin on 13/05/2025.
 //
-#include "bao/types.h"
+#include <bao/types.h>
 #include <bao/utils.h>
 #include <iostream>
 #include <bao/lexer/maps.h>
 #include <cstring>
 #include <bao/parser/ast.h>
 #include <bao/mir/mir.h>
+#include <llvm-18/llvm/Support/CodeGen.h>
+#include <llvm/Target/TargetMachine.h>
+#include <llvm/IR/LegacyPassManager.h>
+#include <llvm/Support/FileSystem.h>
+#include <llvm/Target/TargetOptions.h>
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/Support/TargetSelect.h>
+#include <llvm/MC/TargetRegistry.h>
+#include <llvm/IR/BasicBlock.h>
+#include <llvm/IR/DerivedTypes.h>
+#include <llvm/IR/Function.h>
+#include <llvm/IR/IRBuilder.h>
+#include <llvm/TargetParser/Host.h>
 #include <memory>
 #include <stdexcept>
 
@@ -312,17 +325,118 @@ std::string bao::utils::type_to_string(Type *type) {
     }
 }
 
-/*
+// Helper function guide Linux into the program
+int bao::utils::generate_start() {
+    // LLVM module
+    llvm::LLVMContext context;
+    llvm::Module module("_start", context);
+    llvm::IRBuilder<> builder(context);
 
-LLD_HAS_DRIVER(coff)
-LLD_HAS_DRIVER(elf)
-LLD_HAS_DRIVER(mingw)
-LLD_HAS_DRIVER(macho)
-LLD_HAS_DRIVER(wasm)
+    // Declare the main function to call
+    llvm::FunctionType* mainType = 
+        llvm::FunctionType::get(
+            builder.getInt32Ty(),
+            false);
+    llvm::Function* main = 
+        llvm::Function::Create(
+            mainType, 
+            llvm::Function::ExternalLinkage, 
+            "main",
+            module);
 
-int bao::utils::link_obj(std::vector<const char *> &args) {
-    lld::Result res = lld::lldMain(args, llvm::outs(), llvm::errs(), LLD_ALL_DRIVERS);
-    return res.retCode;
+    // Declare the exit() from cstdlib
+    llvm::FunctionType* exitType = 
+        llvm::FunctionType::get(
+            builder.getVoidTy(), 
+            {builder.getInt32Ty()}, 
+            false);
+    llvm::Function* exit =
+        llvm::Function::Create(
+            exitType,
+            llvm::Function::ExternalLinkage,
+            "exit",
+            module
+        );
+
+    // Linux's starting function
+    llvm::FunctionType* startType =
+        llvm::FunctionType::get(
+            builder.getVoidTy(), 
+            false);
+    llvm::Function* start =
+        llvm::Function::Create(
+            startType,
+            llvm::Function::ExternalLinkage,
+            "_start",
+            module
+        );
+    
+    llvm::BasicBlock* entryBlock = 
+        llvm::BasicBlock::Create(
+            context, 
+            "entry",
+            start);
+
+    // Let's go instruct the entry block
+    builder.SetInsertPoint(entryBlock);
+
+    // Run the main function
+    llvm::Value* ret = builder.CreateCall(main);
+    
+    // Evaluate the return value
+    builder.CreateCall(exit, ret);
+
+    // Done
+    builder.CreateUnreachable();
+
+
+    // Print for debugging
+    #ifndef NDEBUG
+        module.print(llvm::outs(), nullptr);
+    #endif
+
+    llvm::InitializeNativeTarget();
+    llvm::InitializeNativeTargetAsmParser();
+    llvm::InitializeNativeTargetAsmPrinter();
+    llvm::InitializeNativeTargetDisassembler();
+
+    auto targetTriple = 
+        llvm::sys::getDefaultTargetTriple();
+
+    std::string error;
+    const auto* target = 
+        llvm::TargetRegistry::lookupTarget(
+            targetTriple, 
+            error);
+
+    if (!error.empty()) {
+        std::cerr << error << "Lỗi nội bộ: \n";
+        return 1;
+    }
+
+    llvm::TargetOptions opt;
+    auto RM = std::optional<llvm::Reloc::Model>();
+    auto targetMachine =
+        target->createTargetMachine(
+            targetTriple, 
+            "generic", 
+            "",
+            opt, 
+            RM);
+
+    std::error_code EC;
+    llvm::raw_fd_ostream dest("_start.o", EC, llvm::sys::fs::OF_None);
+    //               Linux obj stuff ^
+    if (EC) {
+        llvm::errs() << "Lỗi nội bộ: Gặp sự cố mở tệp _start.o: " << EC.message() << "\n";
+        return 1;
+    }
+    llvm::legacy::PassManager pass;
+    targetMachine->addPassesToEmitFile(
+        pass, 
+        dest, 
+        nullptr, 
+        llvm::CodeGenFileType::ObjectFile);
+    pass.run(module);
+    return 0;
 }
-
-*/
