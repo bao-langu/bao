@@ -21,6 +21,7 @@
 #include <llvm/IR/Function.h>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/TargetParser/Host.h>
+#include <llvm/IR/Module.h>
 #include <memory>
 #include <stdexcept>
 
