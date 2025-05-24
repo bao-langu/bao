@@ -119,10 +119,10 @@ void compilerTest() {
         }
         std::string final = (curr / dir).string() + "/" + output;
 
-        #if defined(MACOS)
+        #if defined(__APPLE__)
             #if defined(__x86_64__) || defined(_M_X64) // Tested for ARM64 (M series) Apple devices
                 std::cout << "Xin lỗi! Trình biên dịch không hỗ trợ hệ thống của bạn!";
-            #elif defined(__aarch64__) || defined(_M_X64)
+            #elif defined(__aarch64__) || defined(__arm64__)
                 std::string command = 
                     std::format("ld {} -o {} -lSystem -syslibroot $(xcrun --show-sdk-path) -e _main",
                                 fullpath.string(),
@@ -154,7 +154,7 @@ void compilerTest() {
                     std::cerr << "Gặp sự cố trong quá trình linking\n";
                     return;
                 }
-            #elif defined(__aarch64__) || defined(_M_X64)
+            #elif defined(__aarch64__) || defined(__arm64__)
                 std::cout << "Trình biên dịch chưa hỗ trợ arm64 cho Linux";
             #else
                 std::cout << "Xin lỗi! Trình biên dịch không hỗ trợ hệ thống của bạn!";
