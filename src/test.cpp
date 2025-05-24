@@ -1,7 +1,7 @@
 //
 // Created by doqin on 13/05/2025.
 //
-#include "bao/codegen/generator.h"
+#include <bao/codegen/generator.h>
 #include <bao/test.h>
 
 // --- Included libraries ---

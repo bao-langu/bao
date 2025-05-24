@@ -2,17 +2,8 @@ cmake_minimum_required(VERSION 3.28)
 project(baoc)
 set(CMAKE_CXX_STANDARD 23)
 
-# Detect platform
-if(APPLE)
-    set(PLATFORM_DIR "macOS_arm64")
-elseif(UNIX)
-    set(PLATFORM_DIR "linux_x86_64")
-else()
-    message(FATAL_ERROR "Unsupported platform")
-endif()
-
 # For people not using CLion
-set(CMAKE_EXPORT_COMPILE_COMMANDS true)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Add source files
 add_executable(${CMAKE_PROJECT_NAME}
@@ -29,7 +20,6 @@ add_executable(${CMAKE_PROJECT_NAME}
 )
 
 # ICU stuff
-
 # Find ICU (request common components)
 find_package(ICU REQUIRED COMPONENTS i18n uc)
 
@@ -40,45 +30,46 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
 
 # LLVM's dependency
 find_package(zstd CONFIG REQUIRED)
-add_library(zstd::libzstd_shared ALIAS zstd::libzstd)
+if(NOT TARGET zstd::libzstd_shared AND TARGET zstd::libzstd)
+    add_library(zstd::libzstd_shared ALIAS zstd::libzstd)
+endif()
 target_link_libraries(${PROJECT_NAME} PRIVATE zstd::libzstd)
 
-# Get LLVM
-find_package(LLVM REQUIRED CONFIG)
 
-# Check if LLVM was found
-if(NOT LLVM_FOUND)
-    message(FATAL_ERROR "LLVM not found!")
+if(WIN32)
+    
+elseif(UNIX)
+    # Get LLVM
+    find_package(LLVM REQUIRED CONFIG)
+    # Check if LLVM was found
+    if(NOT LLVM_FOUND)
+        message(FATAL_ERROR "LLVM not found!")
+    endif()
+    message(STATUS "Found LLVM ${LLVM_VERSION}")
+    message(STATUS "Using LLVMConfig.cmake in: ${LLVM_CMAKE_DIR}")
+    message(STATUS "LLVM include dirs: ${LLVM_INCLUDE_DIRS}")
+    message(STATUS "LLVM library dirs: ${LLVM_LIBRARY_DIRS}")
+    include_directories(${LLVM_INCLUDE_DIRS})
+    target_include_directories(baoc PRIVATE ${LLVM_INCLUDE_DIRS})
+    add_definitions(${LLVM_DEFINITIONS})
+    # Map stuff
+    llvm_map_components_to_libraries(LLVM_LIBS
+        core
+        support
+        irreader 
+        asmparser
+        analysis
+        bitwriter
+        codegen
+        executionengine
+        mc
+        target
+        transformutils
+        native
+    )
+    # Link the damn library
+    target_link_libraries(baoc PRIVATE ${LLVM_LIBS})
 endif()
-
-message(STATUS "Found LLVM ${LLVM_VERSION}")
-message(STATUS "Using LLVMConfig.cmake in: ${LLVM_CMAKE_DIR}")
-message(STATUS "LLVM include dirs: ${LLVM_INCLUDE_DIRS}")
-message(STATUS "LLVM library dirs: ${LLVM_LIBRARY_DIRS}")
-
-include_directories(${LLVM_INCLUDE_DIRS})
-target_include_directories(baoc PRIVATE ${LLVM_INCLUDE_DIRS})
-add_definitions(${LLVM_DEFINITIONS})
-
-# Map stuff
-llvm_map_components_to_libraries(LLVM_LIBS
-    core
-    support
-    irreader 
-    asmparser
-    analysis
-    bitwriter
-    codegen
-    executionengine
-    mc
-    target
-    transformutils
-    native
-)
-
-# Link the damn library
-target_link_libraries(baoc PRIVATE ${LLVM_LIBS})
-
 
 # Get header files
 target_include_directories(${CMAKE_PROJECT_NAME}

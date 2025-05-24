@@ -8,7 +8,7 @@
 #include <cstring>
 #include <bao/parser/ast.h>
 #include <bao/mir/mir.h>
-#include <llvm-18/llvm/Support/CodeGen.h>
+#include <llvm/Support/CodeGen.h>
 #include <llvm/Target/TargetMachine.h>
 #include <llvm/IR/LegacyPassManager.h>
 #include <llvm/Support/FileSystem.h>

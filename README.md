@@ -41,19 +41,13 @@ Còn lại thì cả hai đều chạy câu lệnh sau trong terminal
 cmake --build build
 ```
 ### Windows
-> [!NOTE] 
-> Chưa chính thức test hoặc hỗ trợ, nếu bạn quen việc tự build làm ơn đóng góp dự án với script cài đặt PowerShell boặc Batch file
+Trình biên dịch Bao cần [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/). Làm ơn cài đặt trước khi tiến trình
 
-Bạn cài LLVM bằng Chocolatey hoặc winget. Mình chưa thử nên không có hướng dẫn ở đây.
+Cài đặt [LLVM 18.1.8](https://github.com/llvm/llvm-project/releases/download/llvmorg-18.1.8/LLVM-18.1.8-win64.exe) vào `C:\Program Files` để CMake tìm dễ dàng không thì tự chỉnh sửa CMakeLists.txt để tìm các header và thư viện
 
-Các dependency còn lại thì chạy như sau:
-- Clone repo của [vcpkg](https://github.com/microsoft/vcpkg.git) vào thư mục dự án
-- Chạy script `bootstrap-vcpkg.bat`
-- Chạy lệnh sau:
+Còn lại thì chạy câu lệnh sau trong PowerShell
 ```
-vcpkg/vcpkg install
-cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE="vcpkg/scripts/buildsystems/vcpkg.cmake"
-cmake --build build
+.\windows-setup.ps1
 ```
 
 # Đóng Góp
