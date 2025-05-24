@@ -121,7 +121,7 @@ void compilerTest() {
 
         #if defined(MACOS)
             #if defined(__x86_64__) || defined(_M_X64) // Tested for ARM64 (M series) Apple devices
-                std::cout << "Xin lỗi! Trình biên dịch không hỗ trợ hệ thống của bạn!"
+                std::cout << "Xin lỗi! Trình biên dịch không hỗ trợ hệ thống của bạn!";
             #elif defined(__aarch64__) || defined(_M_X64)
                 std::string command = 
                     std::format("ld {} -o {} -lSystem -syslibroot $(xcrun --show-sdk-path) -e _main",
@@ -134,7 +134,7 @@ void compilerTest() {
                     return;
                 }
             #else
-                std::cout << "Xin lỗi! Trình biên dịch không hỗ trợ hệ thống của bạn!"
+                std::cout << "Xin lỗi! Trình biên dịch không hỗ trợ hệ thống của bạn!";
             #endif
         #elif defined(linux) 
             #if defined(__x86_64__) || defined(_M_X64) // Tested for x86_64 Linux
@@ -155,9 +155,9 @@ void compilerTest() {
                     return;
                 }
             #elif defined(__aarch64__) || defined(_M_X64)
-                std::cout << "Trình biên dịch chưa hỗ trợ arm64 cho Linux"
+                std::cout << "Trình biên dịch chưa hỗ trợ arm64 cho Linux";
             #else
-                std::cout << "Xin lỗi! Trình biên dịch không hỗ trợ hệ thống của bạn!"
+                std::cout << "Xin lỗi! Trình biên dịch không hỗ trợ hệ thống của bạn!";
             #endif
         #elif defined(WINDOWS)
             std::cout << "Trình biên dịch chưa hỗ trợ Windows";
