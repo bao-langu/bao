@@ -8,7 +8,7 @@
 #include <cstring>
 #include <bao/parser/ast.h>
 #include <bao/mir/mir.h>
-#include <llvm-18/llvm/Support/CodeGen.h>
+#include <llvm/Support/CodeGen.h>
 #include <llvm/Target/TargetMachine.h>
 #include <llvm/IR/LegacyPassManager.h>
 #include <llvm/Support/FileSystem.h>
@@ -21,6 +21,7 @@
 #include <llvm/IR/Function.h>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/TargetParser/Host.h>
+#include <llvm/IR/Module.h>
 #include <memory>
 #include <stdexcept>
 
