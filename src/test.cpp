@@ -34,7 +34,7 @@ using std::endl;
 using std::string;
 using std::u8string;
 using std::exception;
-using icu::Normalizer2;
+// using icu::Normalizer2;
 using icu::UnicodeString;
 using icu::StringCharacterIterator;
 
