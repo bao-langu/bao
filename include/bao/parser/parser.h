@@ -33,24 +33,25 @@ namespace bao {
         );
 
         ast::Program parse_program();
-
     private:
+        // Highest priority
         ast::FuncNode parse_function();
-
         ast::FuncNode parse_procedure();
 
+        // Parsing helpers
         Token current();
-
         void next();
-
         Token peek();
-
         void skip_newlines();
+        int current_precedence();
 
+        // Statements
         std::unique_ptr<ast::StmtNode> parse_statement();
         std::unique_ptr<ast::RetStmt> parse_retstmt();
 
-        std::unique_ptr<ast::ExprNode> parse_expression();
+        // Expressions
+        std::unique_ptr<ast::ExprNode> parse_expression(int minPrec);
+        std::unique_ptr<ast::ExprNode> parse_primary();
     };
 }
 #endif //PARSER_H

@@ -2,6 +2,7 @@
 // Created by đỗ quyên on 17/5/25.
 //
 
+#include "bao/parser/ast.h"
 #include <bao/sema/analyzer.h>
 #include <exception>
 
@@ -124,8 +125,10 @@ void bao::Analyzer::analyze_expression(sema::SymbolTable &parentTable, ast::Expr
     if (dynamic_cast<ast::NumLitExpr*>(expr)) {
         // Analyze number literal expression
         // No action needed for number literals
+    } else if (dynamic_cast<ast::BinExpr*>(expr)) {
+        
     } else {
         // Handle other expression types
-        throw std::runtime_error("Unsupported expression type");
+        throw std::runtime_error("Kiểu biểu thức không hỗ trợ");
     }
 }

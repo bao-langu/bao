@@ -184,6 +184,9 @@ namespace bao::ast {
 
     // --- Expressions ---
 
+    /**
+    * The simplest expression 
+    */
     class NumLitExpr final : public ExprNode {
         string value;
     public:
@@ -201,6 +204,9 @@ namespace bao::ast {
         }
     };
 
+    /**
+    * Most important expression
+    */
     class BinExpr final : public ExprNode {
         std::unique_ptr<ExprNode> left;
         std::string op;
@@ -217,6 +223,18 @@ namespace bao::ast {
         left(std::move(left)),
         op(std::move(op)),
         right(std::move(right)) {}
+
+        [[nodiscard]] ExprNode* get_left() const {
+            return left.get();
+        }
+
+        [[nodiscard]] std::string get_op() const {
+            return op;
+        }
+
+        [[nodiscard]] ExprNode* get_right() const {
+            return right.get();
+        }
     };
 
     // --- Final parsed program ---
@@ -226,10 +244,11 @@ namespace bao::ast {
         vector<FuncNode> funcs;
         explicit Program(
             string name, string path,
-            vector<FuncNode>&& funcs)
-        :   name(std::move(name)),
-            path(std::move(path)),
-            funcs(std::move(funcs)) {}
+            vector<FuncNode>&& funcs
+        ):  
+        name(std::move(name)),
+        path(std::move(path)),
+        funcs(std::move(funcs)) {}
     };
 }
 #endif //AST_H

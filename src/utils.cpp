@@ -82,24 +82,33 @@ void bao::utils::ast::print_statement(bao::ast::StmtNode* stmt, const string &pa
     cout << pad_lines(message, padding) << endl;
     if (const auto ret_stmt = dynamic_cast<bao::ast::RetStmt*>(stmt)) {
         if (ret_stmt->get_val()) {
-            ast::print_expression(ret_stmt->get_val(), padding + "   ");
+            ast::print_expression(ret_stmt->get_val(), padding);
         }
     } else {
-        cout << padding + "   Biểu thức không xác định" << endl;
+        cout << padding + " ? Biểu thức không xác định";
     }
+    std::cout << std::endl;
 }
 
 void bao::utils::ast::print_expression(bao::ast::ExprNode* expr, const string &padding) {
     auto [line, column] = expr->pos();
     std::string type = type_to_string(expr->get_type());
     if (const auto num_expr = dynamic_cast<bao::ast::NumLitExpr*>(expr)) {
-
         const auto message = std::format(
-            "Biểu thức số: {} ({}: {}) (Dòng {}, Cột {})",
+            " $ Biểu thức số: {} ({}: {}) (Dòng {}, Cột {})",
             num_expr->get_val(), type, num_expr->get_type()->get_name(), line, column);
-        cout << pad_lines(message, padding) << endl;
+        cout << pad_lines(message, padding);
+    } else if (const auto bin_expr = dynamic_cast<bao::ast::BinExpr*>(expr)){
+        const auto message = std::format(
+            " $ Biểu thức nhị phân ({}: {}) (Dòng {}, Cột {}):",
+            type, bin_expr->get_type()->get_name(), line, column);
+        std::cout << pad_lines(message, padding) << std::endl;
+        print_expression(bin_expr->get_left(), padding + "   ");
+        std::cout << std::endl;
+        cout << padding + "      Phép toán: " + bin_expr->get_op() << std::endl;
+        print_expression(bin_expr->get_right(), padding + "   ");
     } else {
-        cout << padding + "\tBiểu thức không xác định" << endl;
+        cout << padding + " ? Biểu thức không xác định";
     }
 }
 

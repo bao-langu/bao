@@ -51,7 +51,7 @@ void readerTest();
 
 // Main test function
 int test(int argc, char* argv[]) {
-    compilerTest();
+    parserTest();
     return 0;
 }
 
@@ -271,7 +271,7 @@ void semanticsTest() {
 // Test the parser
 void parserTest() {
     try {
-        const bao::Reader reader("test.bao");
+        const bao::Reader reader("test/test.bao");
         const string source = reader.read();
         cout << "Nội dung tệp nguồn:" << endl;
         cout << source << endl;
@@ -283,7 +283,7 @@ void parserTest() {
             bao::utils::print_token(token);
         }
         cout << "Đang phân tích cú pháp..." << endl;
-        bao::Parser parser("test.bao", ".", tokens);
+        bao::Parser parser("test.bao", "test", tokens);
         const bao::ast::Program& program = parser.parse_program();
         cout << "Phân tích cú pháp thành công!" << endl;
         bao::utils::ast::print_program(program);
@@ -295,7 +295,7 @@ void parserTest() {
 // Test the lexer
 void lexerTest() {
     try {
-        const bao::Reader reader("test.bao");
+        const bao::Reader reader("test/test.bao");
         const string source = reader.read();
         cout << "Nội dung tệp nguồn:" << endl;
         cout << source << endl;
