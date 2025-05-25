@@ -19,7 +19,7 @@ Repo này chứa mã nguồn của trình biên dịch. Mục đích cuối cùn
 - Nói chung là ngôn ngữ này có mục đích nghiên cứu và học tập chứ không phải để dùng thường ngày.
 
 # Build
-![GitHub release](https://img.shields.io/github/v/release/bao-langu/bao) ![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS-blue) ![Platform](https://img.shields.io/badge/platform-windows-red)
+![GitHub release](https://img.shields.io/github/v/release/bao-langu/bao) ![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS%20%7C%20windows-blue)
 
 Hướng dẫn build cho máy của mình
 ### macOS và Linux
