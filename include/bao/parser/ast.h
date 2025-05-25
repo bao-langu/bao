@@ -6,6 +6,7 @@
 #define AST_H
 #include <bao/types.h>
 #include <bao/utils.h>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -195,9 +196,27 @@ namespace bao::ast {
             ExprNode("numlitexpr", std::move(type), line, column),
             value(std::move(value)) {}
 
-        [[nodiscard]] string get_value() const {
+        [[nodiscard]] string get_val() const {
             return value;
         }
+    };
+
+    class BinExpr final : public ExprNode {
+        std::unique_ptr<ExprNode> left;
+        std::string op;
+        std::unique_ptr<ExprNode> right;
+    public:
+        explicit BinExpr(
+            std::unique_ptr<ExprNode>&& left,
+            std::string&& op,
+            std::unique_ptr<ExprNode>&& right,
+            const int line,
+            const int column
+        ):
+        ExprNode("binexpr", std::make_unique<bao::UnknownType>(), line, column),
+        left(std::move(left)),
+        op(std::move(op)),
+        right(std::move(right)) {}
     };
 
     // --- Final parsed program ---

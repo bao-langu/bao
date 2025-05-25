@@ -90,7 +90,7 @@ bao::mir::Value bao::mir::Translator::translate_expression(Function& func, ast::
     if (const auto numlitexpr = dynamic_cast<ast::NumLitExpr*>(expr)) {
         Value value;
         value.kind = ValueKind::Constant;
-        value.name = numlitexpr->get_value();
+        value.name = numlitexpr->get_val();
         value.type = numlitexpr->get_type()->clone();
         return std::move(value);
     }

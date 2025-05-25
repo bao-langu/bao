@@ -96,7 +96,7 @@ void bao::utils::ast::print_expression(bao::ast::ExprNode* expr, const string &p
 
         const auto message = std::format(
             "Biểu thức số: {} ({}: {}) (Dòng {}, Cột {})",
-            num_expr->get_value(), type, num_expr->get_type()->get_name(), line, column);
+            num_expr->get_val(), type, num_expr->get_type()->get_name(), line, column);
         cout << pad_lines(message, padding) << endl;
     } else {
         cout << padding + "\tBiểu thức không xác định" << endl;
