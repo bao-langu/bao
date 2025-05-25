@@ -47,7 +47,7 @@ void semanticsTest();
 void parserTest();
 void lexerTest();
 void readerTest();
-int icuTest();
+// int icuTest();
 
 // Main test function
 int test(int argc, char* argv[]) {
@@ -105,7 +105,7 @@ void compilerTest() {
         std::string output = std::regex_replace(mod_file, std::regex(".bao"), "");
 
         std::string dot_o = ".o";
-        #if defined(WINDOWS)
+        #if defined(_WIN32)
             dot_o = ".obj";
         #endif
 
@@ -118,10 +118,13 @@ void compilerTest() {
             return;
         }
         std::string final = (curr / dir).string() + "/" + output;
+        #if defined(_WIN32)
+            final += ".exe";
+        #endif
 
         #if defined(__APPLE__)
             #if defined(__x86_64__) || defined(_M_X64) // Tested for ARM64 (M series) Apple devices
-                std::cout << "Xin lỗi! Trình biên dịch không hỗ trợ hệ thống của bạn!";
+                std::cout << "Xin lỗi! Trình biên dịch không hỗ trợ hệ thống của bạn!" << std::endl;
             #elif defined(__aarch64__) || defined(__arm64__)
                 std::string command = 
                     std::format("ld {} -o {} -lSystem -syslibroot $(xcrun --show-sdk-path) -e _main",
@@ -134,7 +137,7 @@ void compilerTest() {
                     return;
                 }
             #else
-                std::cout << "Xin lỗi! Trình biên dịch không hỗ trợ hệ thống của bạn!";
+                std::cout << "Xin lỗi! Trình biên dịch không hỗ trợ hệ thống của bạn!" << std::endl;
             #endif
         #elif defined(linux) 
             #if defined(__x86_64__) || defined(_M_X64) // Tested for x86_64 Linux
@@ -155,13 +158,32 @@ void compilerTest() {
                     return;
                 }
             #elif defined(__aarch64__) || defined(__arm64__)
-                std::cout << "Trình biên dịch chưa hỗ trợ arm64 cho Linux";
+                std::cout << "Trình biên dịch chưa hỗ trợ arm64 cho Linux" << std::endl;
             #else
-                std::cout << "Xin lỗi! Trình biên dịch không hỗ trợ hệ thống của bạn!";
+                std::cout << "Xin lỗi! Trình biên dịch không hỗ trợ hệ thống của bạn!" << std::endl;
             #endif
-        #elif defined(WINDOWS)
-            std::cout << "Trình biên dịch chưa hỗ trợ Windows";
+        #elif defined(_WIN32)
+            #if defined(__x86_64__) || defined(_M_X64)
+                std::string libs = "libcmt.lib libucrt.lib kernel32.lib user32.lib";
+                std::string subsys = "CONSOLE";
+                std::string machine = "X64";
+
+                std::string command =
+                    std::format("link {} {} /OUT:{} /SUBSYSTEM:{} /MACHINE:{}", 
+                                fullpath.string(), libs, final, subsys, machine);
+                
+                result = std::system(command.c_str());
+                if (result != 0) {
+                    std::cerr << "Gặp sự cố trong quá trình linking\n";
+                    return;
+                }
+            #elif defined(__aarch64__) || defined(__arm64__)
+                std::cout << "Trình biên dịch chưa hỗ trợ arm64 cho Windows" << std::endl;
+            #else
+                std::cout << " Xin lỗi! Trình biên dịch không hỗ trợ hệ thống của bạn!" << std::endl;
+            #endif
         #endif
+        std::cout << "Hoàn thành quá trình xây dựng!" << std::endl;
     } catch (const exception& e) {
         cout << "\n\033[31mGặp sự cố:\033[0m\n\n";
         cout << e.what() << endl;
@@ -311,31 +333,31 @@ void readerTest() {
     }
 }
 
-int icuTest() {
-    // Error code object
-    UErrorCode errorCode = U_ZERO_ERROR;
+// int icuTest() {
+//     // Error code object
+//     UErrorCode errorCode = U_ZERO_ERROR;
 
-    // Get a pointer to a Normalizer2 instance for NFC normalization.
-    const Normalizer2* normalizer = Normalizer2::getNFCInstance(errorCode);
-    if (U_FAILURE(errorCode)) {
-        cerr << "Error obtaining Normalizer2 instance: " << u_errorName(errorCode) << endl;
-        return 1;
-    }
+//     // Get a pointer to a Normalizer2 instance for NFC normalization.
+//     const Normalizer2* normalizer = Normalizer2::getNFCInstance(errorCode);
+//     if (U_FAILURE(errorCode)) {
+//         cerr << "Error obtaining Normalizer2 instance: " << u_errorName(errorCode) << endl;
+//         return 1;
+//     }
 
-    // Example input: it could be any UTF-8 encoded string
-    const u8string inputUTF8 = u8"a\u030A"; // 'a' followed by a combining ring above
-    const UnicodeString source = UnicodeString::fromUTF8(inputUTF8);
+//     // Example input: it could be any UTF-8 encoded string
+//     const u8string inputUTF8 = u8"a\u030A"; // 'a' followed by a combining ring above
+//     const UnicodeString source = UnicodeString::fromUTF8(inputUTF8);
 
-    const UnicodeString normalized = normalizer->normalize(source, errorCode);
-    if (U_FAILURE(errorCode)) {
-        cerr << "Normalization failed: " << u_errorName(errorCode) << endl;
-        return 1;
-    }
+//     const UnicodeString normalized = normalizer->normalize(source, errorCode);
+//     if (U_FAILURE(errorCode)) {
+//         cerr << "Normalization failed: " << u_errorName(errorCode) << endl;
+//         return 1;
+//     }
 
-    // Convert the normalized UnicodeString back to UTF-8.
-    string normalizedUTF8;
-    normalized.toUTF8String(normalizedUTF8);
+//     // Convert the normalized UnicodeString back to UTF-8.
+//     string normalizedUTF8;
+//     normalized.toUTF8String(normalizedUTF8);
 
-    cout << "Normalized string: " << normalizedUTF8 << endl;
-    return 0;
-}
+//     cout << "Normalized string: " << normalizedUTF8 << endl;
+//     return 0;
+// }

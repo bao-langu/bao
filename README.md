@@ -43,12 +43,15 @@ cmake --build build
 ### Windows
 Trình biên dịch Bao cần [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/). Làm ơn cài đặt trước khi tiến trình
 
-Cài đặt [LLVM 18.1.8](https://github.com/llvm/llvm-project/releases/download/llvmorg-18.1.8/LLVM-18.1.8-win64.exe) vào `C:\Program Files` để CMake tìm dễ dàng không thì tự chỉnh sửa CMakeLists.txt để tìm các header và thư viện
+Bạn chịu khó build LLVM qua vcpkg (Chắc mất 1 tiếng) bởi LLVM không cho sẵn dev tool qua các binary.
 
 Còn lại thì chạy câu lệnh sau trong PowerShell
 ```
 .\windows-setup.ps1
 ```
+
+> [!NOTE]
+> Để sử dụng trình biên dịch bạn phải khai báo LIB trong System environment variables cho các thư viện hệ thống sau: libcmt.lib, libucrt.lib, kernel32.lib, user32.lib
 
 # Đóng Góp
 ![Contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen) ![GitHub issues](https://img.shields.io/github/issues/bao-langu/bao)

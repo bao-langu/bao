@@ -6,7 +6,9 @@
     "zstd",
     {
       "name": "llvm",
-      "platform": "windows"
+      "platform": "windows",
+      "default-features": false,
+      "features": ["target-x86"]
     }
   ]
 }

@@ -390,7 +390,6 @@ int bao::utils::generate_start() {
     // Done
     builder.CreateUnreachable();
 
-
     // Print for debugging
     #ifndef NDEBUG
         module.print(llvm::outs(), nullptr);
@@ -424,6 +423,9 @@ int bao::utils::generate_start() {
             "",
             opt, 
             RM);
+
+    module.setDataLayout(targetMachine->createDataLayout());
+    module.setTargetTriple(targetTriple);
 
     std::error_code EC;
     llvm::raw_fd_ostream dest("_start.o", EC, llvm::sys::fs::OF_None);

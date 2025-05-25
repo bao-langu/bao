@@ -87,7 +87,7 @@ namespace bao::mir {
         std::unique_ptr<Type> return_type;
         std::vector<Value> parameters;
         std::vector<BasicBlock> blocks;
-        uint temp_var_count = 0;
+        int temp_var_count = 0;
         int line;
         int column;
     };

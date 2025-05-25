@@ -36,40 +36,36 @@ endif()
 target_link_libraries(${PROJECT_NAME} PRIVATE zstd::libzstd)
 
 
-if(WIN32)
-    
-elseif(UNIX)
-    # Get LLVM
-    find_package(LLVM REQUIRED CONFIG)
-    # Check if LLVM was found
-    if(NOT LLVM_FOUND)
-        message(FATAL_ERROR "LLVM not found!")
-    endif()
-    message(STATUS "Found LLVM ${LLVM_VERSION}")
-    message(STATUS "Using LLVMConfig.cmake in: ${LLVM_CMAKE_DIR}")
-    message(STATUS "LLVM include dirs: ${LLVM_INCLUDE_DIRS}")
-    message(STATUS "LLVM library dirs: ${LLVM_LIBRARY_DIRS}")
-    include_directories(${LLVM_INCLUDE_DIRS})
-    target_include_directories(baoc PRIVATE ${LLVM_INCLUDE_DIRS})
-    add_definitions(${LLVM_DEFINITIONS})
-    # Map stuff
-    llvm_map_components_to_libraries(LLVM_LIBS
-        core
-        support
-        irreader 
-        asmparser
-        analysis
-        bitwriter
-        codegen
-        executionengine
-        mc
-        target
-        transformutils
-        native
-    )
-    # Link the damn library
-    target_link_libraries(baoc PRIVATE ${LLVM_LIBS})
+# Get LLVM
+find_package(LLVM REQUIRED CONFIG)
+# Check if LLVM was found
+if(NOT LLVM_FOUND)
+    message(FATAL_ERROR "LLVM not found!")
 endif()
+message(STATUS "Found LLVM ${LLVM_VERSION}")
+message(STATUS "Using LLVMConfig.cmake in: ${LLVM_CMAKE_DIR}")
+message(STATUS "LLVM include dirs: ${LLVM_INCLUDE_DIRS}")
+message(STATUS "LLVM library dirs: ${LLVM_LIBRARY_DIRS}")
+include_directories(${LLVM_INCLUDE_DIRS})
+target_include_directories(baoc PRIVATE ${LLVM_INCLUDE_DIRS})
+add_definitions(${LLVM_DEFINITIONS})
+# Map stuff
+llvm_map_components_to_libraries(LLVM_LIBS
+    core
+    support
+    irreader 
+    asmparser
+    analysis
+    bitwriter
+    codegen
+    executionengine
+    mc
+    target
+    transformutils
+    native
+)
+# Link the damn library
+target_link_libraries(baoc PRIVATE ${LLVM_LIBS})
 
 # Get header files
 target_include_directories(${CMAKE_PROJECT_NAME}

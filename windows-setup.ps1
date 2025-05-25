@@ -33,7 +33,7 @@ Write-Host = "Added vcpkg to PATH for this session."
 
 # Install dependecies
 try {
-    vcpkg install
+    vcpkg install --triplet x64-windows-release
 } catch {
     Write-Error "Failed to install dependencies: $_"
     exit 1

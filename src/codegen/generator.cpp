@@ -61,6 +61,10 @@ int bao::Generator::create_object(const std::string& filename) {
             opt, 
             RM);
 
+    // Fix on Windows, not sure why it didn't need it on macOS and Linux
+    this->llvm_module.setDataLayout(targetMachine->createDataLayout());
+    this->llvm_module.setTargetTriple(targetTriple);
+
     std::error_code EC;
     std::cout << "Đã lưu tại: " << filename << std::endl;
     llvm::raw_fd_ostream dest(filename, EC, llvm::sys::fs::OF_None);
