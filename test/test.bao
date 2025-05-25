@@ -1,5 +1,5 @@
 hàm chính() -> Z32
-    trả về (1 + 1) * 2
+    trả về (1 + 1) * 2 / 2 - 1
 kết thúc
 
 thủ tục test()

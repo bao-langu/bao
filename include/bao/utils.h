@@ -72,6 +72,8 @@ namespace bao::utils {
      */
     void print_token(const Token &token);
 
+    void trim(std::string& str);
+
     namespace ast {
         /**
          * Helper function to print the program
@@ -134,6 +136,7 @@ namespace bao::utils {
                 }
             }
             this->message = oss.str();
+            trim(this->message);
             return this->message.c_str();
         }
 
@@ -154,12 +157,16 @@ namespace bao::utils {
             string message,
             string filepath,
             const int line,
-            const int column
+            const int column,
+            const int length = 0
         ): line(line),
            column(column) {
             const Reader reader(std::move(filepath));
             string content = reader.get_line(line);
             string liner(std::ranges::max(column - 1, 0), '~');
+            if (length > 0) {
+                liner += std::string(length, '^');
+            }
             this->message = std::format("{}\n\033[32m{}^\033[0m\n[Dòng {}, Cột {}] {}", content, liner, line, column, message);
         }
 
@@ -177,11 +184,11 @@ namespace bao::utils {
          * @return A CompilerError object to throw
          */
         static CompilerError new_error(const string &file, const string &dir, string message, const int line,
-                                       const int column) {
+                                       const int column, const int length = 0) {
             const fs::path filename = file;
             const fs::path directory = dir;
             const fs::path fullpath = directory / filename;
-            return CompilerError(std::move(message), fullpath.string(), line, column);
+            return CompilerError(std::move(message), fullpath.string(), line, column, length);
         }
     };
 
@@ -209,8 +216,8 @@ namespace bao::utils {
     }
 
     bool is_literal(bao::ast::ExprNode* expr);
-    bool can_cast_literal(const bao::ast::NumLitExpr* expr, const Type* type);
-    void cast_literal(bao::ast::NumLitExpr* expr, Type* type);
+    bool can_cast_literal(const bao::ast::ExprNode* expr, const Type* type);
+    void cast_literal(bao::ast::ExprNode* expr, Type* type);
 
     llvm::Type* get_llvm_type(llvm::IRBuilder<>& builder, bao::Type* type);
     llvm::Value* get_llvm_value(llvm::IRBuilder<>& builder, bao::mir::Value& mir_value);

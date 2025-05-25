@@ -228,20 +228,27 @@ bool bao::utils::is_literal(bao::ast::ExprNode* expr) {
     if (dynamic_cast<bao::ast::NumLitExpr*>(expr)) {
         return true;
     }
+    if (auto bin_expr = dynamic_cast<bao::ast::BinExpr*>(expr)) {
+        return is_literal(bin_expr->get_left()) && is_literal(bin_expr->get_right());
+    }
     return false;
 }
 
-void bao::utils::cast_literal(bao::ast::NumLitExpr *expr, Type *type) {
+void bao::utils::cast_literal(bao::ast::ExprNode *expr, Type *type) {
     try {
         expr->set_type(type->clone());
+        if (auto bin_expr = dynamic_cast<bao::ast::BinExpr*>(expr)) {
+            bao::utils::cast_literal(bin_expr->get_left(), type);
+            bao::utils::cast_literal(bin_expr->get_right(), type);
+        }
     } catch (...) {
         throw std::runtime_error(std::format("Lỗi nội bộ: Không nhận dạng được kiểu chuyển: {}", type->get_name()));
     }
 }
 
-bool bao::utils::can_cast_literal(const bao::ast::NumLitExpr *expr, const Type *type) {
+bool bao::utils::can_cast_literal(const bao::ast::ExprNode *expr, const Type *type) {
     if (!expr->get_type()) {
-        return false; // FIXME: Handle this case
+        return false;
     }
     const auto prim = dynamic_cast<PrimitiveType*>(expr->get_type());
     if (!prim) {
@@ -451,4 +458,10 @@ int bao::utils::generate_start() {
         llvm::CodeGenFileType::ObjectFile);
     pass.run(module);
     return 0;
+}
+
+void bao::utils::trim(std::string& str) {
+    while (!str.empty() && (str.back() == '\n' || str.back() == '\r')) {
+        str.pop_back();
+    }
 }
