@@ -337,35 +337,6 @@ llvm::Type* bao::utils::get_llvm_type(llvm::IRBuilder<> &builder, bao::Type* typ
     throw std::runtime_error(std::format("-> Lỗi nội bộ: Không thể chuyển kiểu: {}", type->get_name()));
 }
 
-llvm::Value* bao::utils::get_llvm_value(llvm::IRBuilder<> &builder, bao::mir::Value &mir_value) {
-    try {
-        switch (mir_value.kind) {
-        case bao::mir::ValueKind::Constant:
-            if (auto numlit = dynamic_cast<bao::PrimitiveType*>(mir_value.type.get())) {
-                auto type = get_llvm_type(builder, numlit);
-                if (type->isIntegerTy(32)) {
-                    return builder.getInt32(std::stoi(mir_value.name));
-                } else if (type->isIntegerTy(64)) {
-                    return builder.getInt64(std::stoi(mir_value.name));
-                } else if (type->isFloatTy()) {
-                    return llvm::ConstantFP::get(builder.getFloatTy(), std::stof(mir_value.name));
-                } else if (type->isDoubleTy()) {
-                    return llvm::ConstantFP::get(builder.getDoubleTy(), std::stod(mir_value.name));
-                } else if (type->isVoidTy()) {
-                    return nullptr;
-                }
-            }
-        case bao::mir::ValueKind::Temporary:
-        case bao::mir::ValueKind::Variable:
-        default:
-            ;
-        }
-        throw std::runtime_error("Lỗi nội bộ: Không thể tạo giá trị llvm");
-    } catch (std::exception& e) {
-        throw std::runtime_error("Lỗi nội bộ: Không thể tạo giá trị llvm");
-    }
-}
-
 std::string bao::utils::type_to_string(Type *type) {
     if (auto prim = dynamic_cast<PrimitiveType*>(type)) {
         return "PrimitiveType";

@@ -81,6 +81,7 @@ int bao::Generator::create_object(const std::string& filename) {
 }
 
 void bao::Generator::generate_function(mir::Function& mir_func) {
+    this->current_context = {};
     try {
         // Get function type - Can be thrown an error
         llvm::FunctionType *funcType = 
@@ -144,7 +145,7 @@ void bao::Generator::generate_block(llvm::BasicBlock* ir_block, bao::mir::BasicB
 void bao::Generator::generate_instruction(bao::mir::Instruction* mir_inst) {
     try {
         if (auto retInst = dynamic_cast<mir::ReturnInst*>(mir_inst)) {
-            llvm::Value* val = utils::get_llvm_value(this->ir_builder, retInst->ret_val);
+            auto val = get_llvm_value(retInst->ret_val);
             if (val) {
                 this->ir_builder.CreateRet(val);
             } else {
@@ -152,8 +153,208 @@ void bao::Generator::generate_instruction(bao::mir::Instruction* mir_inst) {
             }
             return;
         }
-        throw std::runtime_error("Không xác định được kiểu câu lệnh");
+        // FIXME: Add floating point add, sub, mul
+        if (auto binInst = dynamic_cast<mir::BinInst*>(mir_inst)) {
+            auto left = get_llvm_value(binInst->left);
+            auto right = get_llvm_value(binInst->right);
+            llvm::Value* dst = nullptr;
+            switch (binInst->op) {
+            case mir::BinaryOp::Add_c: {
+                llvm::Function *saddFunc = llvm::Intrinsic::getOrInsertDeclaration(
+                    &this->llvm_module, 
+                    llvm::Intrinsic::sadd_with_overflow,
+                    {bao::utils::get_llvm_type(
+                        this->ir_builder,
+                        binInst->dst.type.get()
+                    )}
+                );
+
+                llvm::Value *resStruct = this->ir_builder.CreateCall(
+                    saddFunc, {left, right}
+                );
+
+                dst = this->ir_builder.CreateExtractValue(
+                    resStruct, 0
+                );
+
+                // Not really doing anything for now
+                llvm::Value *overflow = this->ir_builder.CreateExtractValue(
+                    resStruct, 1
+                );
+            }
+            break;
+            case mir::BinaryOp::Add_u: {
+                llvm::Function *uaddFunc = llvm::Intrinsic::getOrInsertDeclaration(
+                    &this->llvm_module, 
+                    llvm::Intrinsic::uadd_with_overflow,
+                    {bao::utils::get_llvm_type(
+                        this->ir_builder,
+                        binInst->dst.type.get()
+                    )}
+                );
+
+                llvm::Value *resStruct = this->ir_builder.CreateCall(
+                    uaddFunc, {left, right}
+                );
+
+                dst = this->ir_builder.CreateExtractValue(
+                    resStruct, 0
+                );
+
+                llvm::Value *overflow = this->ir_builder.CreateExtractValue(
+                    resStruct, 1
+                );
+            }
+            break;
+            case mir::BinaryOp::Sub_c: {
+                llvm::Function *ssubFunc = llvm::Intrinsic::getOrInsertDeclaration(
+                    &this->llvm_module, 
+                    llvm::Intrinsic::ssub_with_overflow,
+                    {bao::utils::get_llvm_type(
+                        this->ir_builder,
+                        binInst->dst.type.get()
+                    )}
+                );
+
+                llvm::Value *resStruct = this->ir_builder.CreateCall(
+                    ssubFunc, {left, right}
+                );
+
+                dst = this->ir_builder.CreateExtractValue(
+                    resStruct, 0
+                );
+
+                llvm::Value *overflow = this->ir_builder.CreateExtractValue(
+                    resStruct, 1
+                );
+            }
+            break;
+            case mir::BinaryOp::Sub_u: {
+                llvm::Function *usubFunc = llvm::Intrinsic::getOrInsertDeclaration(
+                    &this->llvm_module, 
+                    llvm::Intrinsic::usub_with_overflow,
+                    {bao::utils::get_llvm_type(
+                        this->ir_builder,
+                        binInst->dst.type.get()
+                    )}
+                );
+
+                llvm::Value *resStruct = this->ir_builder.CreateCall(
+                    usubFunc, {left, right}
+                );
+
+                dst = this->ir_builder.CreateExtractValue(
+                    resStruct, 0
+                );
+
+                llvm::Value *overflow = this->ir_builder.CreateExtractValue(
+                    resStruct, 1
+                );
+            }
+            break;
+            case mir::BinaryOp::Mul_c: {
+                llvm::Function *smulFunc = llvm::Intrinsic::getOrInsertDeclaration(
+                    &this->llvm_module, 
+                    llvm::Intrinsic::smul_with_overflow,
+                    {bao::utils::get_llvm_type(
+                        this->ir_builder,
+                        binInst->dst.type.get()
+                    )}
+                );
+
+                llvm::Value *resStruct = this->ir_builder.CreateCall(
+                    smulFunc, {left, right}
+                );
+
+                dst = this->ir_builder.CreateExtractValue(
+                    resStruct, 0
+                );
+
+                llvm::Value *overflow = this->ir_builder.CreateExtractValue(
+                    resStruct, 1
+                );
+            }
+            break;
+            case mir::BinaryOp::Mul_u: {
+                llvm::Function *umulFunc = llvm::Intrinsic::getOrInsertDeclaration(
+                    &this->llvm_module, 
+                    llvm::Intrinsic::umul_with_overflow,
+                    {bao::utils::get_llvm_type(
+                        this->ir_builder,
+                        binInst->dst.type.get()
+                    )}
+                );
+
+                llvm::Value *resStruct = this->ir_builder.CreateCall(
+                    umulFunc, {left, right}
+                );
+
+                dst = this->ir_builder.CreateExtractValue(
+                    resStruct, 0
+                );
+
+                llvm::Value *overflow = this->ir_builder.CreateExtractValue(
+                    resStruct, 1
+                );
+            }
+            break;
+            case mir::BinaryOp::Div_s: {
+                dst = this->ir_builder.CreateSDiv(left, right, binInst->dst.name);
+            }
+            break;
+            case mir::BinaryOp::Div_u: {
+                dst = this->ir_builder.CreateUDiv(left, right, binInst->dst.name);
+            }
+            break;
+            case mir::BinaryOp::Div_f: {
+                dst = this->ir_builder.CreateFDiv(left, right, binInst->dst.name);
+            }
+            break;
+            // TODO: Later
+            case mir::BinaryOp::Rem_s:
+            case mir::BinaryOp::Rem_u:
+            case mir::BinaryOp::Lt_s:
+            case mir::BinaryOp::Lt_u:
+                throw std::runtime_error("Lỗi nội bộ: Chưa hỗ trợ lấy số dư hoặc so sánh");
+                break;
+            }
+            dst->setName(binInst->dst.name);
+            current_context[binInst->dst.name] = dst;
+            return;
+        }
+        throw std::runtime_error("Lỗi nội bộ: Không xác định được kiểu câu lệnh");
     } catch (std::exception& e) {
         throw; // FIXME: Rethrow for now
+    }
+}
+
+llvm::Value* bao::Generator::get_llvm_value(bao::mir::Value &mir_value) {
+    try {
+        switch (mir_value.kind) {
+        case bao::mir::ValueKind::Constant:
+            if (auto numlit = dynamic_cast<bao::PrimitiveType*>(mir_value.type.get())) {
+                auto type = bao::utils::get_llvm_type(ir_builder, numlit);
+                if (type->isIntegerTy(32)) {
+                    return ir_builder.getInt32(std::stoi(mir_value.name));
+                } else if (type->isIntegerTy(64)) {
+                    return ir_builder.getInt64(std::stoi(mir_value.name));
+                } else if (type->isFloatTy()) {
+                    return llvm::ConstantFP::get(ir_builder.getFloatTy(), std::stof(mir_value.name));
+                } else if (type->isDoubleTy()) {
+                    return llvm::ConstantFP::get(ir_builder.getDoubleTy(), std::stod(mir_value.name));
+                } else if (type->isVoidTy()) {
+                    return nullptr;
+                }
+            }
+        case bao::mir::ValueKind::Temporary:
+            // In faith I trust this won't break (pls don't break)
+            return current_context.at(mir_value.name);
+        case bao::mir::ValueKind::Variable:
+        default:
+            ;
+        }
+        throw std::runtime_error("Lỗi nội bộ: Không thể tạo giá trị llvm");
+    } catch (std::exception& e) {
+        throw std::runtime_error("Lỗi nội bộ: Không thể tạo giá trị llvm");
     }
 }

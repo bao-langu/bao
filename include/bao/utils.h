@@ -220,7 +220,6 @@ namespace bao::utils {
     void cast_literal(bao::ast::ExprNode* expr, Type* type);
 
     llvm::Type* get_llvm_type(llvm::IRBuilder<>& builder, bao::Type* type);
-    llvm::Value* get_llvm_value(llvm::IRBuilder<>& builder, bao::mir::Value& mir_value);
 
     std::string type_to_string(Type* type);
 
