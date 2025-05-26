@@ -51,7 +51,7 @@ void readerTest();
 
 // Main test function
 int test(int argc, char* argv[]) {
-    semanticsTest();
+    mirTest();
     return 0;
 }
 

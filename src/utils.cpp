@@ -24,6 +24,7 @@
 #include <llvm/IR/Module.h>
 #include <memory>
 #include <stdexcept>
+#include <algorithm>
 
 using std::cout;
 using std::endl;
@@ -144,50 +145,83 @@ void bao::utils::mir::print_block(const bao::mir::BasicBlock &block, const strin
 }
 
 void bao::utils::mir::print_instruction(const bao::mir::Instruction* inst, const string &padding) {
-    cout << padding + "Lệnh: ";
-    switch (inst->kind) {
-        case bao::mir::InstructionKind::Assign:
-            cout << "Gán: ";
-            if (const auto assign = dynamic_cast<const bao::mir::AssignInst*>(inst)) {
-                cout << "Từ: ";
-                print_value(assign->src, "");
-                cout << "Đến: ";
-                print_value(assign->dst, "");
-            }
-            cout << endl;
+    cout << padding;    
+    if (const auto assign = dynamic_cast<const bao::mir::AssignInst*>(inst)) {
+        cout << "assigninst: ";
+        print_value(assign->dst, "");
+        cout << " = ";
+        print_value(assign->src, "");
+    } else if (const auto call = dynamic_cast<const bao::mir::CallInst*>(inst)) {
+        cout << "callinst: ";
+        cout << "Tên hàm: " << call->function_name << endl;
+        cout << "Tham số: ";
+        for (const auto &arg : call->arguments) {
+            print_value(arg, "");
+        }
+    } else if (const auto ret = dynamic_cast<const bao::mir::ReturnInst*>(inst)) {
+        cout << "retinst: ";
+        print_value(ret->ret_val, "");
+    } else if (const auto bin = dynamic_cast<const bao::mir::BinInst*>(inst)) {
+        cout << "bininst: ";
+        cout << bin->dst.name << " = ";
+        switch(bin->op) {
+        case bao::mir::BinaryOp::Add_c:
+            cout << "add_c: ";
             break;
-        case bao::mir::InstructionKind::Call:
-            cout << "Gọi hàm: ";
-            if (const auto call = dynamic_cast<const bao::mir::CallInst*>(inst)) {
-                cout << "Tên hàm: " << call->function_name << endl;
-                cout << "Tham số: ";
-                for (const auto &arg : call->arguments) {
-                    print_value(arg, "");
-                }
-            }
-            cout << endl;
+        case bao::mir::BinaryOp::Add_u:
+            cout << "add_u: ";
             break;
-        case bao::mir::InstructionKind::Return:
-            cout << "Trả về: ";
-            if (const auto ret = dynamic_cast<const bao::mir::ReturnInst*>(inst)) {
-                print_value(ret->ret_val, "");
-            }
-            cout << endl;
+        case bao::mir::BinaryOp::Sub_c:
+            cout << "sub_c: ";
             break;
-        default:
-            cout << "Lệnh không xác định" << endl;
+        case bao::mir::BinaryOp::Sub_u:
+            cout << "sub_u: ";
             break;
+        case bao::mir::BinaryOp::Mul_c:
+            cout << "mul_c: ";
+            break;
+        case bao::mir::BinaryOp::Mul_u:
+            cout << "mul_u: ";
+            break;
+        case bao::mir::BinaryOp::Div_s:
+            cout << "div_s: ";
+            break;
+        case bao::mir::BinaryOp::Div_u:
+            cout << "div_u: ";
+            break;
+        case bao::mir::BinaryOp::Div_f:
+            cout << "div_f: ";
+            break;
+        case bao::mir::BinaryOp::Rem_s:
+            cout << "rem_s: ";
+            break;
+        case bao::mir::BinaryOp::Rem_u:
+            cout << "rem_u: ";
+            break;
+        case bao::mir::BinaryOp::Lt_s:
+            cout << "lt_s: ";
+            break;
+        case bao::mir::BinaryOp::Lt_u:
+            cout << "lt_u: ";
+            break;
+        }
+        print_value(bin->left, "");
+        cout << ", ";
+        print_value(bin->right, "");
+    } else {
+        cout << "Lệnh không xác định";
     }
+    cout << endl;
 }
 
 void bao::utils::mir::print_value(const bao::mir::Value &value, const string &padding) {
     cout << padding;
     switch (value.kind) {
         case bao::mir::ValueKind::Constant:
-            cout << "Hằng số: " << type_to_string(value.type.get()) << ": " << value.name;
+            cout << "const(" << type_to_string(value.type.get()) << ": " << value.name << ")";
             break;
         case bao::mir::ValueKind::Temporary:
-            cout << "Biến tạm thời: " << type_to_string(value.type.get()) << ": " << value.name;
+            cout << "temp(" << type_to_string(value.type.get()) << ": " << value.name << ")";
             break;
         default:
             cout << "Giá trị không xác định";
@@ -464,4 +498,14 @@ void bao::utils::trim(std::string& str) {
     while (!str.empty() && (str.back() == '\n' || str.back() == '\r')) {
         str.pop_back();
     }
+}
+
+bool bao::utils::is_signed(bao::Type* type) {
+    const auto type_name = type->get_name();
+    std::vector<std::string> valid = {"Z32", "Z64", "R32", "R64"};
+    if (std::any_of(valid.begin(), valid.end(), 
+        [&](const std::string& s) { return s == type_name; })) {
+        return true;
+    }
+    return false;
 }

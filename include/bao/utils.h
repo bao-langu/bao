@@ -227,6 +227,8 @@ namespace bao::utils {
     std::unique_ptr<Type> clone_type(Type* type);
 
     int generate_start();
+
+    bool is_signed(Type* type);
 }
 
 #endif //UTILS_H

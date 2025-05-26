@@ -1,6 +1,8 @@
 //
 // Created by đỗ quyên on 18/5/25.
 //
+#include "bao/mir/mir.h"
+#include "bao/parser/ast.h"
 #include "bao/types.h"
 #include "bao/utils.h"
 #include <bao/mir/translator.h>
@@ -94,12 +96,135 @@ bao::mir::Value bao::mir::Translator::translate_expression(Function& func, ast::
         value.type = numlitexpr->get_type()->clone();
         return std::move(value);
     }
-    /* For other expression types that need loading
-    Value value;
-    value.kind = ValueKind::Temporary;
-    value.name = "__temp_var_" + std::to_string(this->temp_var_count[func]++);
-    value.type = std::make_unique<Type>(*func.return_type.get());
-    return std::move(value);
-    */
+    if (const auto binexpr = dynamic_cast<ast::BinExpr*>(expr)) {
+        auto left = translate_expression(func, stmt, binexpr->get_left());
+        auto right = translate_expression(func, stmt, binexpr->get_right());
+        auto type = expr->get_type();
+        Value dst;
+        dst.kind = ValueKind::Temporary;
+        dst.name = "__temp" + std::to_string(func.temp_var_count++);
+        dst.type = binexpr->get_type()->clone();
+        try {
+            utils::match(binexpr->get_op(), {
+                {
+                    "+", [&] {
+                        // Signed add
+                        if (utils::is_signed(type)) {
+                            func.blocks.back().instructions.push_back(
+                                std::make_unique<BinInst>(
+                                    dst,
+                                    std::move(left),
+                                    BinaryOp::Add_c,
+                                    std::move(right)
+                                )
+                            );
+                        // Unsigned add
+                        } else {
+                            func.blocks.back().instructions.push_back(
+                                std::make_unique<BinInst>(
+                                    dst,
+                                    std::move(left),
+                                    BinaryOp::Add_u,
+                                    std::move(right)
+                                )
+                            );
+                        }
+                    }
+                },
+                {
+                    "-", [&] {
+                        if (utils::is_signed(type)) {
+                            func.blocks.back().instructions.push_back(
+                                std::make_unique<BinInst>(
+                                    dst,
+                                    std::move(left),
+                                    BinaryOp::Sub_c,
+                                    std::move(right)
+                                    )
+                            );
+                        } else {
+                            func.blocks.back().instructions.push_back(
+                                std::make_unique<BinInst>(
+                                    dst,
+                                    std::move(left),
+                                    BinaryOp::Sub_u,
+                                    std::move(right)
+                                )
+                            );
+                        }
+                    }
+                },
+                {
+                    "*", [&] {
+                        if (utils::is_signed(type)) {
+                            func.blocks.back().instructions.push_back(
+                                std::make_unique<BinInst>(
+                                    dst,
+                                    std::move(left),
+                                    BinaryOp::Mul_c,
+                                    std::move(right)
+                                )
+                            );
+                        } else {
+                            func.blocks.back().instructions.push_back(
+                                std::make_unique<BinInst>(
+                                    dst,
+                                    std::move(left),
+                                    BinaryOp::Mul_u,
+                                    std::move(right)
+                                )
+                            );
+                        }
+                    }
+                },
+                {
+                    // Special operation due to IEEE-754
+                    "/", [&] {
+                        if (utils::is_signed(type)) {
+                            // Floating point numbers
+                            if (type->get_name() == "R32" || type->get_name() == "R64") {
+                                func.blocks.back().instructions.push_back(
+                                    std::make_unique<BinInst>(
+                                        dst,
+                                        std::move(left),
+                                        BinaryOp::Div_f,
+                                        std::move(right)
+                                    )
+                                );
+                            // Dividing signed integers
+                            } else {
+                                func.blocks.back().instructions.push_back(
+                                    std::make_unique<BinInst>(
+                                        dst,
+                                        std::move(left),
+                                        BinaryOp::Div_s,
+                                        std::move(right)
+                                    )
+                                );
+                            }
+                        // Dividing unsigned integers
+                        } else {
+                            func.blocks.back().instructions.push_back(
+                                std::make_unique<BinInst>(
+                                    dst,
+                                    std::move(left),
+                                    BinaryOp::Div_u,
+                                    std::move(right)
+                                )
+                            );
+                        }
+                    }
+                }
+            }, [&expr, this] {
+                auto [line, column] = expr->pos();
+                throw utils::CompilerError::new_error(
+                    this->module.name, this->module.path, 
+                    "Biểu thức không xác định", line, column);
+            });
+        } catch ([[maybe_unused]] exception& e) {
+            throw;
+        }
+        return std::move(dst);
+    }
     return {};
 }
