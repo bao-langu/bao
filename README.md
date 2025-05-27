@@ -46,11 +46,21 @@ cmake --build build
 ### Windows
 Trình biên dịch Bao cần [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/). Làm ơn cài đặt trước khi tiến trình
 
-Bạn chịu khó build LLVM qua vcpkg (Chắc mất 1 tiếng) bởi LLVM không cho sẵn dev tool qua các binary.
+Đầu tiên bạn cài LLVM. Bạn clone từ [đây](https://github.com/llvm/llvm-project) rồi thực hiện các câu lệnh sau trong thư mục dự án
+```
+mkdir build
+cd build
+cmake -DLLVM_ENABLE_PROJECTS="" -DLLVM_TARGETS_TO_BUILD="X86" -DCMAKE_BUILD_TYPE=Release ..\llvm
+cmake --build . --config Release
+cmake --build . --config Debug
+```
+
+Xong bạn copy thư mục `lib\cmake\llvm` vào thư mục `extern\llvm` của dự án Bao.
 
 Còn lại thì chạy câu lệnh sau trong PowerShell
 ```
 .\windows-setup.ps1
+cmake --build build
 ```
 
 > [!NOTE]
