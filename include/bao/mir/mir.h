@@ -21,25 +21,40 @@ namespace bao::mir {
         std::string name;
         std::unique_ptr<Type> type;
 
+        Value(const Value& copy) {
+            this->kind = copy.kind;
+            this->name = copy.name;
+            this->type = copy.type->clone();
+        }
+        Value(Value&& rval) = default;
         Value(): kind(ValueKind::Constant), name(""), type(std::move(std::make_unique<UnknownType>())) {}
         explicit Value(ValueKind&& kind, std::string&& name, std::unique_ptr<Type>&& type)
             : kind(std::move(kind)), name(std::move(name)), type(std::move(type)) {}
     };
 
-    enum class InstructionKind {
-        Assign,
-        BinaryOp,
-        Call,
-        Jump,
-        Branch,
-        Return,
+    enum class BinaryOp {
+        Add_s, // signed checked
+        Add_u, // unsigned
+        Add_f,
+        Sub_s,
+        Sub_u,
+        Sub_f,
+        Mul_s,
+        Mul_u,
+        Mul_f,
+        Div_s,
+        Div_u,
+        Div_f,
+        Rem_s,
+        Rem_u,
+        Lt_s,
+        Lt_u,
     };
 
     /**
      * Base class for all instructions
      */
     struct Instruction {
-        InstructionKind kind;
         virtual ~Instruction() = default;
     };
 
@@ -47,9 +62,7 @@ namespace bao::mir {
         Value dst;
         Value src;
 
-        AssignInst(Value&& dst, Value&& src) : dst(std::move(dst)), src(std::move(src)) {
-            kind = InstructionKind::Assign;
-        }
+        explicit AssignInst(Value&& dst, Value&& src) : dst(std::move(dst)), src(std::move(src)) {}
     };
 
     struct CallInst final : Instruction {
@@ -59,8 +72,24 @@ namespace bao::mir {
 
         explicit CallInst(Value&& res, std::string&& function_name, std::vector<Value>&& arguments)
             : res(std::move(res)), function_name(std::move(function_name)), arguments(std::move(arguments)) {
-            kind = InstructionKind::Call;
         }
+    };
+
+    struct BinInst final : Instruction {
+        Value dst;
+        Value left;
+        BinaryOp op;
+        Value right;
+
+        explicit BinInst(
+            Value& dst, 
+            Value&& left, 
+            BinaryOp&& op,
+            Value&& right
+        ) : dst(dst),
+            left(std::move(left)),
+            op(std::move(op)),
+            right(std::move(right)) {}
     };
 
     struct ReturnInst final : Instruction {
@@ -71,7 +100,6 @@ namespace bao::mir {
          * @param ret_val The return value
          */
         explicit ReturnInst(Value&& ret_val) : ret_val(std::move(ret_val)) {
-            kind = InstructionKind::Return;
         }
     };
 

@@ -3,12 +3,6 @@
   "version": "0.1.0",
   "dependencies": [
     "icu",
-    "zstd",
-    {
-      "name": "llvm",
-      "platform": "windows",
-      "default-features": false,
-      "features": ["target-x86"]
-    }
+    "zstd"
   ]
 }

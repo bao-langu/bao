@@ -2,6 +2,8 @@
 // Created by đỗ quyên on 17/5/25.
 //
 
+#include "bao/parser/ast.h"
+#include "bao/utils.h"
 #include <bao/sema/analyzer.h>
 #include <exception>
 
@@ -79,31 +81,33 @@ void bao::Analyzer::analyze_statement(sema::SymbolTable &parentTable, ast::StmtN
             try {
                 analyze_expression(parentTable, retStmt->get_val());
             } catch (...) {
-                auto [line, column] = retStmt->get_val()->pos();
-                throw utils::CompilerError::new_error(program.name, program.path, "Biểu thức không xác định", line, column);
+                throw;
             }
         }
         // Check if the return type matches the function's return type
         if (return_type->get_name() != "rỗng") {
             // Check if the return type matches the function's return type
             if (retStmt->get_val()) {
-                // For now check only the type name
+
+                // TODO: For now check only the type name, check it better later
                 if (return_type->get_name() == retStmt->get_val()->get_type()->get_name()) {
                     return;
                 }
-                // If the return type does not match, check if it can be cast
-                if (!utils::is_literal(retStmt->get_val())) {
-                    auto [line, column] = retStmt->get_val()->pos();
+
+                auto val = retStmt->get_val();
+                // If the return type does not match, check if it can be literal cast
+                if (!utils::is_literal(val)) {
+                    auto [line, column] = val->pos();
                     throw utils::CompilerError::new_error(program.name, program.path, "Kiểu trả về khác kiểu trả về của hàm", line, column);
                 }
-                const auto numExpr = dynamic_cast<ast::NumLitExpr*>(retStmt->get_val());
-                if (!utils::can_cast_literal(numExpr, return_type)) {
-                    auto [line, column] = numExpr->pos();
+                if (!utils::can_cast_literal(retStmt->get_val(), return_type)) {
+                    auto [line, column] = val->pos();
                     throw utils::CompilerError::new_error(program.name, program.path, "Kiểu trả về khác kiểu trả về của hàm", line, column);
                 }
+
                 // Cast the expression to the function's return type
                 try {
-                    utils::cast_literal(numExpr, return_type);
+                    utils::cast_literal(val, return_type);
                 } catch ([[maybe_unused]] std::exception& e) {
                     throw;
                 }
@@ -124,8 +128,89 @@ void bao::Analyzer::analyze_expression(sema::SymbolTable &parentTable, ast::Expr
     if (dynamic_cast<ast::NumLitExpr*>(expr)) {
         // Analyze number literal expression
         // No action needed for number literals
+    } else if (auto bin_expr = dynamic_cast<ast::BinExpr*>(expr)) {
+        auto left = bin_expr->get_left();
+        auto right = bin_expr->get_right();
+
+        // Resolve left and right's type if they're binary expressions (Unknown by default)
+        std::vector<std::exception_ptr> exceptions;
+        try {
+            if (dynamic_cast<ast::BinExpr*>(left)) {
+                analyze_expression(parentTable, left);
+            }
+        } catch (...) {
+            exceptions.push_back(std::current_exception());
+        }
+        try {
+            if (dynamic_cast<ast::BinExpr*>(right)) {
+                analyze_expression(parentTable, right);
+            }
+        } catch (...) {
+            exceptions.push_back(std::current_exception());
+        }
+        if (!exceptions.empty()) {
+            throw bao::utils::ErrorList(exceptions);
+        }
+
+        // TODO: Implement proper type checking later
+        if (left->get_type()->get_name() == right->get_type()->get_name()) {
+            expr->set_type(left->get_type()->clone());
+            return;
+        }
+
+        // Check if can literal cast
+        if (!utils::is_literal(left) && !utils::is_literal(right)) {
+            auto [line, column] = left->pos();
+            throw utils::CompilerError::new_error(
+                program.name, program.path, 
+                std::format("Kiểu dữ liệu của hai biểu thức khác nhau {} {} {}",
+                                    left->get_type()->get_name(),
+                                    bin_expr->get_op(),
+                                    right->get_type()->get_name()),
+                line, column);
+        }
+
+        // Left is a number literal
+        if (utils::is_literal(left) && !utils::is_literal(right)) {
+            auto num_left = dynamic_cast<ast::NumLitExpr*>(left);
+            if (utils::can_cast_literal(num_left, right->get_type())) {
+                try {
+                    utils::cast_literal(num_left, right->get_type());
+                    expr->set_type(right->get_type()->clone());
+                    return;
+                } catch ([[maybe_unused]] exception& e) {
+                    throw;
+                }
+            }
+        }
+        
+        // Right is a number literal
+        if (utils::is_literal(right) && !utils::is_literal(left)) {
+            auto num_right = dynamic_cast<ast::NumLitExpr*>(right);
+            if (utils::can_cast_literal(num_right, left->get_type())) {
+                try {
+                    utils::cast_literal(num_right, left->get_type());
+                    expr->set_type(left->get_type()->clone());
+                    return;
+                } catch ([[maybe_unused]] exception& e) {
+                    throw;
+                }
+            }
+        }
+        
+        // Fallback
+        auto [lline, lcolumn] = left->pos();
+        auto [rline, rcolumn] = right->pos();
+        throw utils::CompilerError::new_error(
+            program.name, 
+            program.path, 
+            std::format("Kiểu dữ liệu của hai biểu thức khác nhau: {} {} {}",
+                                    left->get_type()->get_name(),
+                                    bin_expr->get_op(),
+                                    right->get_type()->get_name()),
+            lline, lcolumn, rcolumn - lcolumn);
     } else {
         // Handle other expression types
-        throw std::runtime_error("Unsupported expression type");
+        throw std::runtime_error("Kiểu biểu thức không hỗ trợ");
     }
 }

@@ -6,6 +6,7 @@
 #define AST_H
 #include <bao/types.h>
 #include <bao/utils.h>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -183,6 +184,9 @@ namespace bao::ast {
 
     // --- Expressions ---
 
+    /**
+    * The simplest expression 
+    */
     class NumLitExpr final : public ExprNode {
         string value;
     public:
@@ -195,8 +199,41 @@ namespace bao::ast {
             ExprNode("numlitexpr", std::move(type), line, column),
             value(std::move(value)) {}
 
-        [[nodiscard]] string get_value() const {
+        [[nodiscard]] string get_val() const {
             return value;
+        }
+    };
+
+    /**
+    * Most important expression
+    */
+    class BinExpr final : public ExprNode {
+        std::unique_ptr<ExprNode> left;
+        std::string op;
+        std::unique_ptr<ExprNode> right;
+    public:
+        explicit BinExpr(
+            std::unique_ptr<ExprNode>&& left,
+            std::string&& op,
+            std::unique_ptr<ExprNode>&& right,
+            const int line,
+            const int column
+        ):
+        ExprNode("binexpr", std::make_unique<bao::UnknownType>(), line, column),
+        left(std::move(left)),
+        op(std::move(op)),
+        right(std::move(right)) {}
+
+        [[nodiscard]] ExprNode* get_left() const {
+            return left.get();
+        }
+
+        [[nodiscard]] std::string get_op() const {
+            return op;
+        }
+
+        [[nodiscard]] ExprNode* get_right() const {
+            return right.get();
         }
     };
 
@@ -207,10 +244,11 @@ namespace bao::ast {
         vector<FuncNode> funcs;
         explicit Program(
             string name, string path,
-            vector<FuncNode>&& funcs)
-        :   name(std::move(name)),
-            path(std::move(path)),
-            funcs(std::move(funcs)) {}
+            vector<FuncNode>&& funcs
+        ):  
+        name(std::move(name)),
+        path(std::move(path)),
+        funcs(std::move(funcs)) {}
     };
 }
 #endif //AST_H

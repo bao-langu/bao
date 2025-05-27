@@ -1,6 +1,7 @@
 # Local project folders
 .cache/
 .idea/
+.vs/
 .vscode/
 build/
 cmake-build-debug/

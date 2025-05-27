@@ -195,6 +195,7 @@ bao::Token bao::Lexer::handle_identifier() {
         if (keywords.contains(identifier)) {
             return Token{TokenType::Keyword, identifier, line, column};
         }
+
         // Else is just an identifier
         return Token{TokenType::Identifier, identifier, line, column};
     } catch ([[maybe_unused]] out_of_range &e) {
@@ -242,8 +243,9 @@ bao::Token bao::Lexer::handle_symbols() {
         }
 
         // Otherwise, it's a single operator
+        const string op = this->current_utf8(); // Fixed cuz me is dumb
         this->next();
-        return Token{TokenType::Operator, this->current_utf8(), line, column};
+        return Token{TokenType::Operator, op, line, column};
     } catch ([[maybe_unused]] out_of_range &e) {
         throw;
     }

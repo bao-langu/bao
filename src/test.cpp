@@ -241,7 +241,7 @@ void mirTest() {
 
 void semanticsTest() {
     try {
-        const bao::Reader reader("test.bao");
+        const bao::Reader reader("test/test.bao");
         const string source = reader.read();
         cout << "Nội dung tệp nguồn:" << endl;
         cout << source << endl;
@@ -253,7 +253,7 @@ void semanticsTest() {
             bao::utils::print_token(token);
         }
         cout << "Đang phân tích cú pháp..." << endl;
-        bao::Parser parser("test.bao", ".", tokens);
+        bao::Parser parser("test.bao", "test", tokens);
         bao::ast::Program program = std::move(parser.parse_program());
         cout << "Phân tích cú pháp thành công!" << endl;
         bao::utils::ast::print_program(program);
@@ -264,14 +264,14 @@ void semanticsTest() {
         bao::utils::ast::print_program(program);
     } catch (const exception& e) {
         cout << "\n\033[31mGặp sự cố trong quá trình kiểm tra ngữ nghĩa:\033[0m\n\n";
-        cout << e.what() << endl;
+        cout << e.what() << endl << endl;
     }
 }
 
 // Test the parser
 void parserTest() {
     try {
-        const bao::Reader reader("test.bao");
+        const bao::Reader reader("test/test.bao");
         const string source = reader.read();
         cout << "Nội dung tệp nguồn:" << endl;
         cout << source << endl;
@@ -283,7 +283,7 @@ void parserTest() {
             bao::utils::print_token(token);
         }
         cout << "Đang phân tích cú pháp..." << endl;
-        bao::Parser parser("test.bao", ".", tokens);
+        bao::Parser parser("test.bao", "test", tokens);
         const bao::ast::Program& program = parser.parse_program();
         cout << "Phân tích cú pháp thành công!" << endl;
         bao::utils::ast::print_program(program);
@@ -295,7 +295,7 @@ void parserTest() {
 // Test the lexer
 void lexerTest() {
     try {
-        const bao::Reader reader("test.bao");
+        const bao::Reader reader("test/test.bao");
         const string source = reader.read();
         cout << "Nội dung tệp nguồn:" << endl;
         cout << source << endl;

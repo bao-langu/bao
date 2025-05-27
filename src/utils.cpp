@@ -24,6 +24,7 @@
 #include <llvm/IR/Module.h>
 #include <memory>
 #include <stdexcept>
+#include <algorithm>
 
 using std::cout;
 using std::endl;
@@ -82,24 +83,33 @@ void bao::utils::ast::print_statement(bao::ast::StmtNode* stmt, const string &pa
     cout << pad_lines(message, padding) << endl;
     if (const auto ret_stmt = dynamic_cast<bao::ast::RetStmt*>(stmt)) {
         if (ret_stmt->get_val()) {
-            ast::print_expression(ret_stmt->get_val(), padding + "   ");
+            ast::print_expression(ret_stmt->get_val(), padding);
         }
     } else {
-        cout << padding + "   Biểu thức không xác định" << endl;
+        cout << padding + " ? Biểu thức không xác định";
     }
+    std::cout << std::endl;
 }
 
 void bao::utils::ast::print_expression(bao::ast::ExprNode* expr, const string &padding) {
     auto [line, column] = expr->pos();
     std::string type = type_to_string(expr->get_type());
     if (const auto num_expr = dynamic_cast<bao::ast::NumLitExpr*>(expr)) {
-
         const auto message = std::format(
-            "Biểu thức số: {} ({}: {}) (Dòng {}, Cột {})",
-            num_expr->get_value(), type, num_expr->get_type()->get_name(), line, column);
-        cout << pad_lines(message, padding) << endl;
+            " $ Biểu thức số: {} ({}: {}) (Dòng {}, Cột {})",
+            num_expr->get_val(), type, num_expr->get_type()->get_name(), line, column);
+        cout << pad_lines(message, padding);
+    } else if (const auto bin_expr = dynamic_cast<bao::ast::BinExpr*>(expr)){
+        const auto message = std::format(
+            " $ Biểu thức nhị phân ({}: {}) (Dòng {}, Cột {}):",
+            type, bin_expr->get_type()->get_name(), line, column);
+        std::cout << pad_lines(message, padding) << std::endl;
+        print_expression(bin_expr->get_left(), padding + "   ");
+        std::cout << std::endl;
+        cout << padding + "      Phép toán: " + bin_expr->get_op() << std::endl;
+        print_expression(bin_expr->get_right(), padding + "   ");
     } else {
-        cout << padding + "\tBiểu thức không xác định" << endl;
+        cout << padding + " ? Biểu thức không xác định";
     }
 }
 
@@ -135,50 +145,92 @@ void bao::utils::mir::print_block(const bao::mir::BasicBlock &block, const strin
 }
 
 void bao::utils::mir::print_instruction(const bao::mir::Instruction* inst, const string &padding) {
-    cout << padding + "Lệnh: ";
-    switch (inst->kind) {
-        case bao::mir::InstructionKind::Assign:
-            cout << "Gán: ";
-            if (const auto assign = dynamic_cast<const bao::mir::AssignInst*>(inst)) {
-                cout << "Từ: ";
-                print_value(assign->src, "");
-                cout << "Đến: ";
-                print_value(assign->dst, "");
-            }
-            cout << endl;
+    cout << padding;    
+    if (const auto assign = dynamic_cast<const bao::mir::AssignInst*>(inst)) {
+        cout << "assigninst: ";
+        print_value(assign->dst, "");
+        cout << " = ";
+        print_value(assign->src, "");
+    } else if (const auto call = dynamic_cast<const bao::mir::CallInst*>(inst)) {
+        cout << "callinst: ";
+        cout << "Tên hàm: " << call->function_name << endl;
+        cout << "Tham số: ";
+        for (const auto &arg : call->arguments) {
+            print_value(arg, "");
+        }
+    } else if (const auto ret = dynamic_cast<const bao::mir::ReturnInst*>(inst)) {
+        cout << "retinst: ";
+        print_value(ret->ret_val, "");
+    } else if (const auto bin = dynamic_cast<const bao::mir::BinInst*>(inst)) {
+        cout << "bininst: ";
+        cout << bin->dst.name << " = ";
+        switch(bin->op) {
+        case bao::mir::BinaryOp::Add_f:
+            cout << "add_f: ";
             break;
-        case bao::mir::InstructionKind::Call:
-            cout << "Gọi hàm: ";
-            if (const auto call = dynamic_cast<const bao::mir::CallInst*>(inst)) {
-                cout << "Tên hàm: " << call->function_name << endl;
-                cout << "Tham số: ";
-                for (const auto &arg : call->arguments) {
-                    print_value(arg, "");
-                }
-            }
-            cout << endl;
+        case bao::mir::BinaryOp::Add_s:
+            cout << "add_c: ";
             break;
-        case bao::mir::InstructionKind::Return:
-            cout << "Trả về: ";
-            if (const auto ret = dynamic_cast<const bao::mir::ReturnInst*>(inst)) {
-                print_value(ret->ret_val, "");
-            }
-            cout << endl;
+        case bao::mir::BinaryOp::Add_u:
+            cout << "add_u: ";
             break;
-        default:
-            cout << "Lệnh không xác định" << endl;
+        case bao::mir::BinaryOp::Sub_f:
+            cout << "sub_f: ";
             break;
+        case bao::mir::BinaryOp::Sub_s:
+            cout << "sub_c: ";
+            break;
+        case bao::mir::BinaryOp::Sub_u:
+            cout << "sub_u: ";
+            break;
+        case bao::mir::BinaryOp::Mul_f:
+            cout << "mul_f: ";
+            break;
+        case bao::mir::BinaryOp::Mul_s:
+            cout << "mul_c: ";
+            break;
+        case bao::mir::BinaryOp::Mul_u:
+            cout << "mul_u: ";
+            break;
+        case bao::mir::BinaryOp::Div_s:
+            cout << "div_s: ";
+            break;
+        case bao::mir::BinaryOp::Div_u:
+            cout << "div_u: ";
+            break;
+        case bao::mir::BinaryOp::Div_f:
+            cout << "div_f: ";
+            break;
+        case bao::mir::BinaryOp::Rem_s:
+            cout << "rem_s: ";
+            break;
+        case bao::mir::BinaryOp::Rem_u:
+            cout << "rem_u: ";
+            break;
+        case bao::mir::BinaryOp::Lt_s:
+            cout << "lt_s: ";
+            break;
+        case bao::mir::BinaryOp::Lt_u:
+            cout << "lt_u: ";
+            break;
+        }
+        print_value(bin->left, "");
+        cout << ", ";
+        print_value(bin->right, "");
+    } else {
+        cout << "Lệnh không xác định";
     }
+    cout << endl;
 }
 
 void bao::utils::mir::print_value(const bao::mir::Value &value, const string &padding) {
     cout << padding;
     switch (value.kind) {
         case bao::mir::ValueKind::Constant:
-            cout << "Hằng số: " << type_to_string(value.type.get()) << ": " << value.name;
+            cout << "const(" << type_to_string(value.type.get()) << ": " << value.name << ")";
             break;
         case bao::mir::ValueKind::Temporary:
-            cout << "Biến tạm thời: " << type_to_string(value.type.get()) << ": " << value.name;
+            cout << "temp(" << type_to_string(value.type.get()) << ": " << value.name << ")";
             break;
         default:
             cout << "Giá trị không xác định";
@@ -219,20 +271,27 @@ bool bao::utils::is_literal(bao::ast::ExprNode* expr) {
     if (dynamic_cast<bao::ast::NumLitExpr*>(expr)) {
         return true;
     }
+    if (auto bin_expr = dynamic_cast<bao::ast::BinExpr*>(expr)) {
+        return is_literal(bin_expr->get_left()) && is_literal(bin_expr->get_right());
+    }
     return false;
 }
 
-void bao::utils::cast_literal(bao::ast::NumLitExpr *expr, Type *type) {
+void bao::utils::cast_literal(bao::ast::ExprNode *expr, Type *type) {
     try {
         expr->set_type(type->clone());
+        if (auto bin_expr = dynamic_cast<bao::ast::BinExpr*>(expr)) {
+            bao::utils::cast_literal(bin_expr->get_left(), type);
+            bao::utils::cast_literal(bin_expr->get_right(), type);
+        }
     } catch (...) {
         throw std::runtime_error(std::format("Lỗi nội bộ: Không nhận dạng được kiểu chuyển: {}", type->get_name()));
     }
 }
 
-bool bao::utils::can_cast_literal(const bao::ast::NumLitExpr *expr, const Type *type) {
+bool bao::utils::can_cast_literal(const bao::ast::ExprNode *expr, const Type *type) {
     if (!expr->get_type()) {
-        return false; // FIXME: Handle this case
+        return false;
     }
     const auto prim = dynamic_cast<PrimitiveType*>(expr->get_type());
     if (!prim) {
@@ -285,35 +344,6 @@ llvm::Type* bao::utils::get_llvm_type(llvm::IRBuilder<> &builder, bao::Type* typ
         }
     }
     throw std::runtime_error(std::format("-> Lỗi nội bộ: Không thể chuyển kiểu: {}", type->get_name()));
-}
-
-llvm::Value* bao::utils::get_llvm_value(llvm::IRBuilder<> &builder, bao::mir::Value &mir_value) {
-    try {
-        switch (mir_value.kind) {
-        case bao::mir::ValueKind::Constant:
-            if (auto numlit = dynamic_cast<bao::PrimitiveType*>(mir_value.type.get())) {
-                auto type = get_llvm_type(builder, numlit);
-                if (type->isIntegerTy(32)) {
-                    return builder.getInt32(std::stoi(mir_value.name));
-                } else if (type->isIntegerTy(64)) {
-                    return builder.getInt64(std::stoi(mir_value.name));
-                } else if (type->isFloatTy()) {
-                    return llvm::ConstantFP::get(builder.getFloatTy(), std::stof(mir_value.name));
-                } else if (type->isDoubleTy()) {
-                    return llvm::ConstantFP::get(builder.getDoubleTy(), std::stod(mir_value.name));
-                } else if (type->isVoidTy()) {
-                    return nullptr;
-                }
-            }
-        case bao::mir::ValueKind::Temporary:
-        case bao::mir::ValueKind::Variable:
-        default:
-            ;
-        }
-        throw std::runtime_error("Lỗi nội bộ: Không thể tạo giá trị llvm");
-    } catch (std::exception& e) {
-        throw std::runtime_error("Lỗi nội bộ: Không thể tạo giá trị llvm");
-    }
 }
 
 std::string bao::utils::type_to_string(Type *type) {
@@ -442,4 +472,30 @@ int bao::utils::generate_start() {
         llvm::CodeGenFileType::ObjectFile);
     pass.run(module);
     return 0;
+}
+
+void bao::utils::trim(std::string& str) {
+    while (!str.empty() && (str.back() == '\n' || str.back() == '\r')) {
+        str.pop_back();
+    }
+}
+
+bool bao::utils::is_signed(bao::Type* type) {
+    const auto type_name = type->get_name();
+    std::vector<std::string> valid = {"Z32", "Z64", "R32", "R64"};
+    if (std::any_of(valid.begin(), valid.end(), 
+        [&](const std::string& s) { return s == type_name; })) {
+        return true;
+    }
+    return false;
+}
+
+bool bao::utils::is_float(bao::Type* type) {
+    const auto type_name = type->get_name();
+    std::vector<std::string> valid = {"R32", "R64"};
+    if (std::any_of(valid.begin(), valid.end(), 
+        [&](const std::string& s) { return s == type_name; })) {
+        return true;
+    }
+    return false;
 }

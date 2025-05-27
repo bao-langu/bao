@@ -35,6 +35,9 @@ if(NOT TARGET zstd::libzstd_shared AND TARGET zstd::libzstd)
 endif()
 target_link_libraries(${PROJECT_NAME} PRIVATE zstd::libzstd)
 
+if(WIN32)
+    set(LLVM_DIR ${CMAKE_CURRENT_SOURCE_DIR}/extern/llvm/lib/cmake/llvm)
+endif()
 
 # Get LLVM
 find_package(LLVM REQUIRED CONFIG)
