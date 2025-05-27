@@ -165,19 +165,28 @@ void bao::utils::mir::print_instruction(const bao::mir::Instruction* inst, const
         cout << "bininst: ";
         cout << bin->dst.name << " = ";
         switch(bin->op) {
-        case bao::mir::BinaryOp::Add_c:
+        case bao::mir::BinaryOp::Add_f:
+            cout << "add_f: ";
+            break;
+        case bao::mir::BinaryOp::Add_s:
             cout << "add_c: ";
             break;
         case bao::mir::BinaryOp::Add_u:
             cout << "add_u: ";
             break;
-        case bao::mir::BinaryOp::Sub_c:
+        case bao::mir::BinaryOp::Sub_f:
+            cout << "sub_f: ";
+            break;
+        case bao::mir::BinaryOp::Sub_s:
             cout << "sub_c: ";
             break;
         case bao::mir::BinaryOp::Sub_u:
             cout << "sub_u: ";
             break;
-        case bao::mir::BinaryOp::Mul_c:
+        case bao::mir::BinaryOp::Mul_f:
+            cout << "mul_f: ";
+            break;
+        case bao::mir::BinaryOp::Mul_s:
             cout << "mul_c: ";
             break;
         case bao::mir::BinaryOp::Mul_u:
@@ -474,6 +483,16 @@ void bao::utils::trim(std::string& str) {
 bool bao::utils::is_signed(bao::Type* type) {
     const auto type_name = type->get_name();
     std::vector<std::string> valid = {"Z32", "Z64", "R32", "R64"};
+    if (std::any_of(valid.begin(), valid.end(), 
+        [&](const std::string& s) { return s == type_name; })) {
+        return true;
+    }
+    return false;
+}
+
+bool bao::utils::is_float(bao::Type* type) {
+    const auto type_name = type->get_name();
+    std::vector<std::string> valid = {"R32", "R64"};
     if (std::any_of(valid.begin(), valid.end(), 
         [&](const std::string& s) { return s == type_name; })) {
         return true;

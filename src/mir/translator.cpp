@@ -110,14 +110,25 @@ bao::mir::Value bao::mir::Translator::translate_expression(Function& func, ast::
                     "+", [&] {
                         // Signed add
                         if (utils::is_signed(type)) {
-                            func.blocks.back().instructions.push_back(
-                                std::make_unique<BinInst>(
-                                    dst,
-                                    std::move(left),
-                                    BinaryOp::Add_c,
-                                    std::move(right)
-                                )
-                            );
+                            if (utils::is_float(type)) {
+                                func.blocks.back().instructions.push_back(
+                                    std::make_unique<BinInst>(
+                                        dst,
+                                        std::move(left),
+                                        BinaryOp::Add_f,
+                                        std::move(right)
+                                    )
+                                );
+                            } else {
+                                func.blocks.back().instructions.push_back(
+                                    std::make_unique<BinInst>(
+                                        dst,
+                                        std::move(left),
+                                        BinaryOp::Add_s,
+                                        std::move(right)
+                                    )
+                                );
+                            }
                         // Unsigned add
                         } else {
                             func.blocks.back().instructions.push_back(
@@ -134,14 +145,25 @@ bao::mir::Value bao::mir::Translator::translate_expression(Function& func, ast::
                 {
                     "-", [&] {
                         if (utils::is_signed(type)) {
-                            func.blocks.back().instructions.push_back(
-                                std::make_unique<BinInst>(
-                                    dst,
-                                    std::move(left),
-                                    BinaryOp::Sub_c,
-                                    std::move(right)
+                            if (utils::is_float(type)) {
+                                func.blocks.back().instructions.push_back(
+                                    std::make_unique<BinInst>(
+                                        dst,
+                                        std::move(left),
+                                        BinaryOp::Sub_f,
+                                        std::move(right)
                                     )
-                            );
+                                );
+                            } else {
+                                func.blocks.back().instructions.push_back(
+                                    std::make_unique<BinInst>(
+                                        dst,
+                                        std::move(left),
+                                        BinaryOp::Sub_s,
+                                        std::move(right)
+                                    )
+                                );
+                            }
                         } else {
                             func.blocks.back().instructions.push_back(
                                 std::make_unique<BinInst>(
@@ -157,14 +179,25 @@ bao::mir::Value bao::mir::Translator::translate_expression(Function& func, ast::
                 {
                     "*", [&] {
                         if (utils::is_signed(type)) {
-                            func.blocks.back().instructions.push_back(
-                                std::make_unique<BinInst>(
-                                    dst,
-                                    std::move(left),
-                                    BinaryOp::Mul_c,
-                                    std::move(right)
-                                )
-                            );
+                            if (utils::is_float(type)) {
+                                func.blocks.back().instructions.push_back(
+                                    std::make_unique<BinInst>(
+                                        dst,
+                                        std::move(left),
+                                        BinaryOp::Mul_f,
+                                        std::move(right)
+                                    )
+                                );
+                            } else {
+                                func.blocks.back().instructions.push_back(
+                                    std::make_unique<BinInst>(
+                                        dst,
+                                        std::move(left),
+                                        BinaryOp::Mul_s,
+                                        std::move(right)
+                                    )
+                                );
+                            }
                         } else {
                             func.blocks.back().instructions.push_back(
                                 std::make_unique<BinInst>(
@@ -182,7 +215,7 @@ bao::mir::Value bao::mir::Translator::translate_expression(Function& func, ast::
                     "/", [&] {
                         if (utils::is_signed(type)) {
                             // Floating point numbers
-                            if (type->get_name() == "R32" || type->get_name() == "R64") {
+                            if (utils::is_float(type)) {
                                 func.blocks.back().instructions.push_back(
                                     std::make_unique<BinInst>(
                                         dst,

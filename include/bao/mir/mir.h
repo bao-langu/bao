@@ -33,12 +33,15 @@ namespace bao::mir {
     };
 
     enum class BinaryOp {
-        Add_c, // signed checked
+        Add_s, // signed checked
         Add_u, // unsigned
-        Sub_c,
+        Add_f,
+        Sub_s,
         Sub_u,
-        Mul_c,
+        Sub_f,
+        Mul_s,
         Mul_u,
+        Mul_f,
         Div_s,
         Div_u,
         Div_f,

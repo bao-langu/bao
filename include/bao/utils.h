@@ -228,6 +228,8 @@ namespace bao::utils {
     int generate_start();
 
     bool is_signed(Type* type);
+
+    bool is_float(Type* type);
 }
 
 #endif //UTILS_H

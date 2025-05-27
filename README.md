@@ -33,7 +33,10 @@ brew install llvm
 - Đối với Linux thì chạy câu lệnh này
 - (Mới thử trên ubuntu/debian, có thể phải resolve nhiều thứ nếu không cẩn thận)
 ```
-sudo apt install llvm llvm-18-dev libllvm18
+wget https://apt.llvm.org/llvm.sh
+chmod +x llvm.sh
+sudo ./llvm.sh 20
+sudo apt install llvm-20
 ```
 Còn lại thì cả hai đều chạy câu lệnh sau trong terminal
 ```

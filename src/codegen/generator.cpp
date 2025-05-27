@@ -13,6 +13,7 @@
 #include <llvm/TargetParser/Host.h>
 #include <llvm/MC/TargetRegistry.h>
 #include <llvm/IR/LegacyPassManager.h>
+#include <llvm/IR/Intrinsics.h>
 #include <iostream>
 
 bao::Generator::Generator(bao::mir::Module&& mir_module
@@ -159,7 +160,11 @@ void bao::Generator::generate_instruction(bao::mir::Instruction* mir_inst) {
             auto right = get_llvm_value(binInst->right);
             llvm::Value* dst = nullptr;
             switch (binInst->op) {
-            case mir::BinaryOp::Add_c: {
+            case mir::BinaryOp::Add_f: {
+                dst = this->ir_builder.CreateFAdd(left, right, binInst->dst.name);
+            }
+            break;
+            case mir::BinaryOp::Add_s: {
                 llvm::Function *saddFunc = llvm::Intrinsic::getOrInsertDeclaration(
                     &this->llvm_module, 
                     llvm::Intrinsic::sadd_with_overflow,
@@ -206,7 +211,11 @@ void bao::Generator::generate_instruction(bao::mir::Instruction* mir_inst) {
                 );
             }
             break;
-            case mir::BinaryOp::Sub_c: {
+            case mir::BinaryOp::Sub_f: {
+                dst = this->ir_builder.CreateFSub(left, right, binInst->dst.name);
+            }
+            break;
+            case mir::BinaryOp::Sub_s: {
                 llvm::Function *ssubFunc = llvm::Intrinsic::getOrInsertDeclaration(
                     &this->llvm_module, 
                     llvm::Intrinsic::ssub_with_overflow,
@@ -252,7 +261,11 @@ void bao::Generator::generate_instruction(bao::mir::Instruction* mir_inst) {
                 );
             }
             break;
-            case mir::BinaryOp::Mul_c: {
+            case mir::BinaryOp::Mul_f: {
+                dst = this->ir_builder.CreateFMul(left, right, binInst->dst.name);
+            }
+            break;
+            case mir::BinaryOp::Mul_s: {
                 llvm::Function *smulFunc = llvm::Intrinsic::getOrInsertDeclaration(
                     &this->llvm_module, 
                     llvm::Intrinsic::smul_with_overflow,
