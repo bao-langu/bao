@@ -287,20 +287,16 @@ std::unique_ptr<bao::ast::StmtNode> bao::Parser::parse_statement() {
                 "biến", [&]() {
                     try {
                         stmt = this->parse_vardeclstmt(false);
-                    } catch ([[maybe_unused]] exception& e) {
-                        throw utils::CompilerError::new_error(
-                            this->filename, this->directory, "Lỗi cú pháp trong câu lệnh khai báo biến", this->current().line, this->current().column
-                        );
+                    } catch (...) {
+                        throw;
                     }
                 }
             }, {
                 "hằng", [&]() {
                     try {
                         stmt = this->parse_vardeclstmt(true);
-                    } catch ([[maybe_unused]] exception& e) {
-                        throw utils::CompilerError::new_error(
-                            this->filename, this->directory, "Lỗi cú pháp trong câu lệnh khai báo hằng số", this->current().line, this->current().column
-                        );
+                    } catch (...) {
+                        throw;
                     }
                 }
             }
@@ -350,6 +346,13 @@ std::unique_ptr<bao::ast::VarDeclStmt> bao::Parser::parse_vardeclstmt(bool isCon
         if (current().value == ":=") {
             this->next(); // Consumes ':=' token
             val = this->parse_expression(0);
+        } else if (isConst) {
+            auto temp_line = this->current().line;
+            auto temp_column = this->current().column;
+            throw utils::CompilerError::new_error(
+                this->filename, this->directory,
+                "Hằng số phải có giá trị khởi tạo", 
+                temp_line, temp_column);
         }
         return std::make_unique<ast::VarDeclStmt>(varNode, std::move(val), line, column);
     } catch ([[maybe_unused]] exception& e) {

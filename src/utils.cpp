@@ -84,19 +84,31 @@ void bao::utils::ast::print_statement(bao::ast::StmtNode* stmt, const string &pa
     if (const auto ret_stmt = dynamic_cast<bao::ast::RetStmt*>(stmt)) {
         if (ret_stmt->get_val()) {
             ast::print_expression(ret_stmt->get_val(), padding);
+            std::cout << std::endl;
         }
     } else if (const auto vardecl_stmt = dynamic_cast<bao::ast::VarDeclStmt*>(stmt)) {
-        cout << padding + " $ Biến: " << std::format("{} ({}: {})",
+        auto& var = vardecl_stmt->get_var();
+        auto type = var.get_type();
+        auto [var_line, var_column] = var.pos();
+        std::string var_name = "Biến";
+        if (var.is_const()) {
+            var_name = "Hằng";
+        }
+        cout << padding + " $ " + var_name + ": " << std::format("{} ({}: {}) (Dòng {}, Cột {})",
                 vardecl_stmt->get_var().get_name(),
-                utils::type_to_string(vardecl_stmt->get_var().get_type()), vardecl_stmt->get_var().get_type()->get_name());
+                utils::type_to_string(type), type->get_name(),
+                var_line, var_column
+            );
         if (vardecl_stmt->get_val()) {
             cout << " := " << endl;
             ast::print_expression(vardecl_stmt->get_val(), padding + "   ");
         }
+        std::cout << std::endl;
     } else {
         cout << padding + " ? Biểu thức không xác định";
+        std::cout << std::endl;
     }
-    std::cout << std::endl;
+    std::cout << padding << std::endl;
 }
 
 void bao::utils::ast::print_expression(bao::ast::ExprNode* expr, const string &padding) {

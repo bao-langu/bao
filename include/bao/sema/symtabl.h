@@ -18,12 +18,15 @@ namespace bao::sema {
     struct SymbolInfo {
         SymbolType type;
         Type* datatype;
-        int scopeLevel;
     };
 
     class SymbolTable {
         std::unordered_map<std::string, SymbolInfo> table;
+        SymbolTable* parent;
     public:
+        SymbolTable(): parent(nullptr) {}
+        SymbolTable(SymbolTable* parent): parent(parent) {}
+
         bool insert(const std::string& name, const SymbolInfo& info) {
             return table.emplace(name, info).second;
         }
@@ -32,6 +35,9 @@ namespace bao::sema {
             const auto it = table.find(name);
             if (it != table.end()) {
                 return &it->second;
+            }
+            if (parent) {
+                return parent->lookup(name);
             }
             return nullptr;
         }
@@ -44,8 +50,7 @@ namespace bao::sema {
             for (const auto& [name, info] : table) {
                 std::cout << "Name: " << name
                         << ", Type: " << static_cast<int>(info.type)
-                        << ", DataType: " << info.datatype->get_name()
-                        << ", Scope: " << info.scopeLevel << "\n";
+                        << ", DataType: " << info.datatype->get_name();
             }
         }
     };

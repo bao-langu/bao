@@ -101,6 +101,9 @@ namespace bao::ast {
             this->type = cpy.type->clone();
             this->isConst = cpy.isConst;
         }
+        VarNode operator=(const VarNode& cpy) {
+            return VarNode(cpy.name, cpy.type->clone(), cpy.isConst, cpy.line, cpy.column);
+        }
         VarNode(
             string name,
             std::unique_ptr<Type>&& type,
