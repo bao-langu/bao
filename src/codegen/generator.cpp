@@ -154,7 +154,6 @@ void bao::Generator::generate_instruction(bao::mir::Instruction* mir_inst) {
             }
             return;
         }
-        // FIXME: Add floating point add, sub, mul
         if (auto binInst = dynamic_cast<mir::BinInst*>(mir_inst)) {
             auto left = get_llvm_value(binInst->left);
             auto right = get_llvm_value(binInst->right);
