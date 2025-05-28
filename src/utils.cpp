@@ -85,6 +85,14 @@ void bao::utils::ast::print_statement(bao::ast::StmtNode* stmt, const string &pa
         if (ret_stmt->get_val()) {
             ast::print_expression(ret_stmt->get_val(), padding);
         }
+    } else if (const auto vardecl_stmt = dynamic_cast<bao::ast::VarDeclStmt*>(stmt)) {
+        cout << padding + " $ Biến: " << std::format("{} ({}: {})",
+                vardecl_stmt->get_var().get_name(),
+                utils::type_to_string(vardecl_stmt->get_var().get_type()), vardecl_stmt->get_var().get_type()->get_name());
+        if (vardecl_stmt->get_val()) {
+            cout << " := " << endl;
+            ast::print_expression(vardecl_stmt->get_val(), padding + "   ");
+        }
     } else {
         cout << padding + " ? Biểu thức không xác định";
     }

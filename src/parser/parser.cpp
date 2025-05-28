@@ -121,17 +121,12 @@ bao::ast::FuncNode bao::Parser::parse_function() {
     }
     this->next(); // Consumes '->'
 
-    if (this->current().type != TokenType::Identifier) {
-        throw utils::CompilerError::new_error(
-            this->filename, this->directory, "Mong đợi kiểu trả về tại vị trí này", this->current().line, this->current().column);
+    std::unique_ptr<Type> type = nullptr;
+    try {
+        type = parse_type();
+    } catch ([[maybe_unused]] exception& e) {
+        throw;
     }
-    // TODO: Implement types other than primitive
-    if (!primitive_map.contains(this->current().value)) {
-        throw utils::CompilerError::new_error(
-            this->filename, this->directory, "Mong đợi kiểu nguyên thuỷ", this->current().line, this->current().column);
-    }
-    const string type = this->current().value;
-    this->next(); // Consumes type
 
     if (this->current().type != TokenType::Newline) {
         throw utils::CompilerError::new_error(
@@ -167,7 +162,7 @@ bao::ast::FuncNode bao::Parser::parse_function() {
     }
     this->next(); // Consumes 'kết thúc'
 
-    return {std::move(function_name), std::move(params), std::move(stmts), std::move(std::make_unique<PrimitiveType>(type)), line, column};
+    return {std::move(function_name), std::move(params), std::move(stmts), std::move(type), line, column};
 }
 
 bao::ast::FuncNode bao::Parser::parse_procedure() {
@@ -278,12 +273,34 @@ std::unique_ptr<bao::ast::StmtNode> bao::Parser::parse_statement() {
     try {
         utils::match(this->current().value,{
             {
-                "trả về", [this, &stmt]() {
+                "trả về", [&]() {
                     try {
                         stmt = this->parse_retstmt();
                     } catch ([[maybe_unused]] exception& e) {
                         throw utils::CompilerError::new_error(
-                            this->filename, this->directory, "Lỗi cú pháp trong câu lệnh trả về", this->current().line, this->current().column);
+                            this->filename, this->directory, "Lỗi cú pháp trong câu lệnh trả về", this->current().line, this->current().column
+                        );
+                    }
+                }
+            },
+            {
+                "biến", [&]() {
+                    try {
+                        stmt = this->parse_vardeclstmt(false);
+                    } catch ([[maybe_unused]] exception& e) {
+                        throw utils::CompilerError::new_error(
+                            this->filename, this->directory, "Lỗi cú pháp trong câu lệnh khai báo biến", this->current().line, this->current().column
+                        );
+                    }
+                }
+            }, {
+                "hằng", [&]() {
+                    try {
+                        stmt = this->parse_vardeclstmt(true);
+                    } catch ([[maybe_unused]] exception& e) {
+                        throw utils::CompilerError::new_error(
+                            this->filename, this->directory, "Lỗi cú pháp trong câu lệnh khai báo hằng số", this->current().line, this->current().column
+                        );
                     }
                 }
             }
@@ -291,7 +308,8 @@ std::unique_ptr<bao::ast::StmtNode> bao::Parser::parse_statement() {
             [this, &stmt]() {
                     stmt = nullptr;
                     throw utils::CompilerError::new_error(
-                        this->filename, this->directory, "Câu lệnh không xác định", this->current().line, this->current().column);
+                        this->filename, this->directory, "Câu lệnh không xác định", this->current().line, this->current().column
+                    );
                 }
             }
         );
@@ -315,6 +333,64 @@ std::unique_ptr<bao::ast::RetStmt> bao::Parser::parse_retstmt() {
     } catch ([[maybe_unused]] exception& e) {
         throw;
     }
+}
+
+std::unique_ptr<bao::ast::VarDeclStmt> bao::Parser::parse_vardeclstmt(bool isConst) {
+    auto line = this->current().line;
+    auto column = this->current().column;
+    this->next(); // Consumes 'hằng' or 'biến'
+    if (this->current().type != TokenType::Identifier) {
+        throw utils::CompilerError::new_error(
+            this->filename, this->directory, "Mong đợi tên biến tại đây", this->current().line, this->current().column
+        );
+    }
+    try {
+        auto varNode = this->parse_var(isConst);
+        std::unique_ptr<bao::ast::ExprNode> val = nullptr;
+        if (current().value == ":=") {
+            this->next(); // Consumes ':=' token
+            val = this->parse_expression(0);
+        }
+        return std::make_unique<ast::VarDeclStmt>(varNode, std::move(val), line, column);
+    } catch ([[maybe_unused]] exception& e) {
+        throw;
+    }
+}
+
+bao::ast::VarNode bao::Parser::parse_var(bool isConst) {
+    auto var_line = this->current().line;
+    auto var_column = this->current().column;
+    std::string var_name = this->current().value;
+    this->next();
+    if (this->current().value != "E") {
+        throw utils::CompilerError::new_error(
+            this->filename, this->directory, "Mong đợi ký hiệu 'E' tại đây", this->current().line, this->current().column
+        );
+    }
+    this->next();
+    try {
+        auto type = this->parse_type();
+        return ast::VarNode(var_name, std::move(type), isConst, var_line, var_column);
+    } catch ([[maybe_unused]] exception& e) {
+        throw;
+    }
+}
+
+std::unique_ptr<bao::Type> bao::Parser::parse_type() {
+    if (this->current().type != TokenType::Identifier) {
+        throw utils::CompilerError::new_error(
+        this->filename, this->directory, "Kiểu dữ liệu không xác định", this->current().line, this->current().column
+        );
+    }
+    
+    // TODO: Implement types other than primitive
+    if (!primitive_map.contains(this->current().value)) {
+        throw utils::CompilerError::new_error(
+            this->filename, this->directory, "Mong đợi kiểu nguyên thuỷ", this->current().line, this->current().column);
+    }
+    std::string type_name = this->current().value;
+    this->next();
+    return std::make_unique<PrimitiveType>(type_name);
 }
 
 std::unique_ptr<bao::ast::ExprNode> bao::Parser::parse_expression(int minPrec) {

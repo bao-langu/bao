@@ -5,6 +5,7 @@
 #ifndef PARSER_H
 #define PARSER_H
 
+#include <memory>
 #include <vector>
 #include <bao/lexer/token.h>
 #include <bao/parser/ast.h>
@@ -45,9 +46,13 @@ namespace bao {
         void skip_newlines();
         int current_precedence();
 
+        ast::VarNode parse_var(bool isConst);
+        std::unique_ptr<Type> parse_type();
+
         // Statements
         std::unique_ptr<ast::StmtNode> parse_statement();
         std::unique_ptr<ast::RetStmt> parse_retstmt();
+        std::unique_ptr<ast::VarDeclStmt> parse_vardeclstmt(bool isConst);
 
         // Expressions
         std::unique_ptr<ast::ExprNode> parse_expression(int minPrec);

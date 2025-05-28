@@ -95,17 +95,28 @@ namespace bao::ast {
     // --- Program's variables ---
     class VarNode final : public ASTNode {
         std::unique_ptr<Type> type;
+        bool isConst;
     public:
+        VarNode(VarNode& cpy): ASTNode(cpy.name, cpy.line, cpy.column) {
+            this->type = cpy.type->clone();
+            this->isConst = cpy.isConst;
+        }
         VarNode(
             string name,
+            std::unique_ptr<Type>&& type,
+            bool isConst,
             const int line,
-            const int column,
-            std::unique_ptr<Type>&& type
-        ):  ASTNode(std::move(name), line, column),
-            type(std::move(type)) {}
+            const int column
+        ):  ASTNode(name, line, column),
+            type(std::move(type)),
+            isConst(isConst) {}
 
         [[nodiscard]] Type* get_type() const {
             return type.get();
+        }
+
+        [[nodiscard]] bool is_const() const {
+            return isConst;
         }
     };
 
@@ -149,20 +160,20 @@ namespace bao::ast {
     class VarDeclStmt final : public StmtNode {
         VarNode var;
         std::unique_ptr<ExprNode> val;
-        public:
+    public:
         explicit VarDeclStmt(
-            VarNode  var,
+            VarNode var,
             std::unique_ptr<ExprNode>&& val,
             const int line, const int column
             ):
             StmtNode("vardeclstmt", line, column),
-            var(std::move(var)), val(std::move(val)) {}
+            var(var), val(std::move(val)) {}
 
-        [[nodiscard]] const VarNode &get_var() const {
+        [[nodiscard]] const VarNode& get_var() const {
             return var;
         }
 
-        [[nodiscard]] const ExprNode *get_val() const {
+        [[nodiscard]] ExprNode* get_val() const {
             return val.get();
         }
     };

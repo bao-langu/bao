@@ -1,4 +1,5 @@
 hàm chính() -> Z32
+    biến a E Z32 := 2
     trả về (1 + 2) * 2 / 3 - 2
 kết thúc
 
