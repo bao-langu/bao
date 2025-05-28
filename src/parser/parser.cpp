@@ -435,14 +435,19 @@ std::unique_ptr<bao::ast::ExprNode> bao::Parser::parse_primary() {
     auto column = this->current().column;
     this->next(); // Consumes token
     switch (current.type) {
+        case TokenType::Identifier:
+            return std::make_unique<ast::VarExpr>(
+                val, std::make_unique<UnknownType>(),
+                line, column
+            );
         case TokenType::Literal:
             if (val.contains(".")) {
                 return std::make_unique<ast::NumLitExpr>(
-                    val, std::move(std::make_unique<PrimitiveType>("R64")),
+                    val, std::make_unique<PrimitiveType>("R64"),
                     line, column);
             }
             return std::make_unique<ast::NumLitExpr>(
-                val, std::move(std::make_unique<PrimitiveType>("Z64")),
+                val, std::make_unique<PrimitiveType>("Z64"),
                 line, column);
 
         case TokenType::LParen: {

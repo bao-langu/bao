@@ -59,7 +59,6 @@ void linuxStartTest() {
     bao::utils::generate_start();
 }
 
-
 void compilerTest() {
     try {
         const bao::Reader reader("test/test.bao");

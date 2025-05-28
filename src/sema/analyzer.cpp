@@ -156,6 +156,16 @@ void bao::Analyzer::analyze_expression(sema::SymbolTable &parentTable, ast::Expr
     if (dynamic_cast<ast::NumLitExpr*>(expr)) {
         // Analyze number literal expression
         // No action needed for number literals
+    } else if (auto var = dynamic_cast<ast::VarExpr*>(expr)) {
+        auto symbol = parentTable.lookup(var->get_name());
+        if (!symbol || symbol->type != sema::SymbolType::Variable) {
+            auto [line, column] = var->pos();
+            throw utils::CompilerError::new_error(
+                this->program.name, this->program.path,
+                "Biến không xác định, chưa khai báo hoặc trùng tên với hàm", 
+                line, column);
+        }
+        var->set_type(symbol->datatype->clone());
     } else if (auto bin_expr = dynamic_cast<ast::BinExpr*>(expr)) {
         auto left = bin_expr->get_left();
         auto right = bin_expr->get_right();
@@ -164,16 +174,12 @@ void bao::Analyzer::analyze_expression(sema::SymbolTable &parentTable, ast::Expr
         std::vector<std::exception_ptr> exceptions;
 
         try {
-            if (dynamic_cast<ast::BinExpr*>(left)) {
-                analyze_expression(parentTable, left);
-            }
+            analyze_expression(parentTable, left);
         } catch (...) {
             exceptions.push_back(std::current_exception());
         }
         try {
-            if (dynamic_cast<ast::BinExpr*>(right)) {
-                analyze_expression(parentTable, right);
-            }
+            analyze_expression(parentTable, right);
         } catch (...) {
             exceptions.push_back(std::current_exception());
         }
@@ -188,6 +194,8 @@ void bao::Analyzer::analyze_expression(sema::SymbolTable &parentTable, ast::Expr
         }
 
         // Check if can literal cast
+        auto [lline, lcolumn] = left->pos();
+        auto [rline, rcolumn] = right->pos();
         if (!utils::is_literal(left) && !utils::is_literal(right)) {
             auto [line, column] = left->pos();
             throw utils::CompilerError::new_error(
@@ -196,7 +204,7 @@ void bao::Analyzer::analyze_expression(sema::SymbolTable &parentTable, ast::Expr
                                     left->get_type()->get_name(),
                                     bin_expr->get_op(),
                                     right->get_type()->get_name()),
-                line, column);
+                lline, lcolumn, rcolumn - lcolumn);
         }
 
         // Left is a number literal
@@ -228,8 +236,6 @@ void bao::Analyzer::analyze_expression(sema::SymbolTable &parentTable, ast::Expr
         }
         
         // Fallback
-        auto [lline, lcolumn] = left->pos();
-        auto [rline, rcolumn] = right->pos();
         throw utils::CompilerError::new_error(
             program.name, 
             program.path, 

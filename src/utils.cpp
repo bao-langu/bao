@@ -117,12 +117,20 @@ void bao::utils::ast::print_expression(bao::ast::ExprNode* expr, const string &p
     if (const auto num_expr = dynamic_cast<bao::ast::NumLitExpr*>(expr)) {
         const auto message = std::format(
             " $ Biểu thức số: {} ({}: {}) (Dòng {}, Cột {})",
-            num_expr->get_val(), type, num_expr->get_type()->get_name(), line, column);
+            num_expr->get_val(), type, num_expr->get_type()->get_name(), line, column
+        );
+        cout << pad_lines(message, padding);
+    } else if (const auto var_expr = dynamic_cast<bao::ast::VarExpr*>(expr)) {
+        const auto message = std::format(
+            " $ Biểu thức biến: {} ({}: {}) (Dòng {}, Cột {})",
+            var_expr->get_name(), type, var_expr->get_type()->get_name(), line, column
+        );
         cout << pad_lines(message, padding);
     } else if (const auto bin_expr = dynamic_cast<bao::ast::BinExpr*>(expr)){
         const auto message = std::format(
             " $ Biểu thức nhị phân ({}: {}) (Dòng {}, Cột {}):",
-            type, bin_expr->get_type()->get_name(), line, column);
+            type, bin_expr->get_type()->get_name(), line, column
+        );
         std::cout << pad_lines(message, padding) << std::endl;
         print_expression(bin_expr->get_left(), padding + "   ");
         std::cout << std::endl;

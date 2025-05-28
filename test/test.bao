@@ -2,7 +2,8 @@ hàm chính() -> Z32
     biến a E Z32 := 2
     hằng b E R64 := 3.4
     biến c E Z64
-    trả về (1 + 2) * 2 / 3 - 2
+    biến d E Z32 := 3
+    trả về (1 + a) * 2 / d - 2
 kết thúc
 
 thủ tục test()

@@ -205,16 +205,31 @@ namespace bao::ast {
         string value;
     public:
         explicit NumLitExpr(
-            string value,
+            std::string value,
             std::unique_ptr<Type> &&type,
             const int line,
             const int column
-            ):
-            ExprNode("numlitexpr", std::move(type), line, column),
+        ):  ExprNode("numlitexpr", std::move(type), line, column),
             value(std::move(value)) {}
 
-        [[nodiscard]] string get_val() const {
+        [[nodiscard]] std::string get_val() const {
             return value;
+        }
+    };
+
+    class VarExpr final : public ExprNode {
+        std::string name;
+    public:
+        explicit VarExpr(
+            string name,
+            std::unique_ptr<Type>&& type,
+            const int line,
+            const int column
+        ):  ExprNode("varexpr", std::move(type), line, column),
+            name(std::move(name)) {}
+
+        [[nodiscard]] std::string get_name() const {
+            return name;
         }
     };
 
