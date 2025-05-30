@@ -53,6 +53,7 @@ namespace bao {
         std::unique_ptr<ast::StmtNode> parse_statement();
         std::unique_ptr<ast::RetStmt> parse_retstmt();
         std::unique_ptr<ast::VarDeclStmt> parse_vardeclstmt(bool isConst);
+        std::unique_ptr<ast::VarAssignStmt> parse_varassignstmt();
 
         // Expressions
         std::unique_ptr<ast::ExprNode> parse_expression(int minPrec);

@@ -1,6 +1,7 @@
 hàm chính() -> Z32
-    biến a E Z32 := 2
+    biến a E Z32 := 3
     hằng b E R64 := 3.4
+    a := 2
     biến c E Z64
     biến d E Z32 := 3
     trả về (1 + a) * 2 / d - 2

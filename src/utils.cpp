@@ -94,7 +94,8 @@ void bao::utils::ast::print_statement(bao::ast::StmtNode* stmt, const string &pa
         if (var.is_const()) {
             var_name = "Hằng";
         }
-        cout << padding + " $ " + var_name + ": " << std::format("{} ({}: {}) (Dòng {}, Cột {})",
+        cout << padding << " $ " << var_name << ": " << std::format(
+                "{} ({}: {}) (Dòng {}, Cột {})",
                 vardecl_stmt->get_var().get_name(),
                 utils::type_to_string(type), type->get_name(),
                 var_line, var_column
@@ -103,6 +104,17 @@ void bao::utils::ast::print_statement(bao::ast::StmtNode* stmt, const string &pa
             cout << " := " << endl;
             ast::print_expression(vardecl_stmt->get_val(), padding + "   ");
         }
+        std::cout << std::endl;
+    } else if (const auto varassign_stmt = dynamic_cast<bao::ast::VarAssignStmt*>(stmt)) {
+        auto [line, column] = varassign_stmt->pos();
+        cout 
+            << padding << " $ "
+            << std::format(
+                "{} (Dòng {}, Cột {}) :=\n",
+                varassign_stmt->get_var_name(),
+                line, column
+            );
+        ast::print_expression(varassign_stmt->get_val(), padding + "   ");
         std::cout << std::endl;
     } else {
         cout << padding + " ? Biểu thức không xác định";

@@ -168,12 +168,31 @@ namespace bao::ast {
             VarNode var,
             std::unique_ptr<ExprNode>&& val,
             const int line, const int column
-            ):
-            StmtNode("vardeclstmt", line, column),
+        ) : StmtNode("vardeclstmt", line, column),
             var(var), val(std::move(val)) {}
 
         [[nodiscard]] const VarNode& get_var() const {
             return var;
+        }
+
+        [[nodiscard]] ExprNode* get_val() const {
+            return val.get();
+        }
+    };
+
+    class VarAssignStmt final : public StmtNode {
+        std::string var_name;
+        std::unique_ptr<ExprNode> val;
+    public:
+        explicit VarAssignStmt(
+            std::string var_name,
+            std::unique_ptr<ExprNode>&& val,
+            const int line, const int column
+        ) : StmtNode("varassignstmt", line, column),
+            var_name(var_name), val(std::move(val)) {}
+
+        [[nodiscard]] std::string get_var_name() const {
+            return var_name;
         }
 
         [[nodiscard]] ExprNode* get_val() const {

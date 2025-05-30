@@ -26,13 +26,14 @@ std::unordered_map<std::string, int> precedences{
     {"/",       100}
 };
 
-bao::Parser::Parser(const string &filename, const string &directory, const vector<Token> &tokens) : tokens(tokens) {
+bao::Parser :: Parser(const string &filename, const string &directory, const vector<Token> &tokens) : tokens(tokens) {
     this->filename = filename;
     this->directory = directory;
     this->it = 0;
 }
 
-bao::ast::Program bao::Parser::parse_program() {
+auto
+bao::Parser :: parse_program() -> bao::ast::Program {
     vector<ast::FuncNode> functions;
     vector<exception_ptr> exceptions;
     while (this->current().type != TokenType::EndOfFile) {
@@ -88,7 +89,8 @@ bao::ast::Program bao::Parser::parse_program() {
         std::move(functions));
 }
 
-bao::ast::FuncNode bao::Parser::parse_function() {
+auto
+bao::Parser :: parse_function() -> bao::ast::FuncNode {
     const int line = this->current().line;
     const int column = this->current().column;
     this->next(); // Consumes "hàm"
@@ -165,7 +167,8 @@ bao::ast::FuncNode bao::Parser::parse_function() {
     return {std::move(function_name), std::move(params), std::move(stmts), std::move(type), line, column};
 }
 
-bao::ast::FuncNode bao::Parser::parse_procedure() {
+auto
+bao::Parser :: parse_procedure() -> bao::ast::FuncNode {
     const int line = this->current().line;
     const int column = this->current().column;
     this->next(); // Consumes "thủ tục"
@@ -229,33 +232,38 @@ bao::ast::FuncNode bao::Parser::parse_procedure() {
     return {std::move(function_name), std::move(params), std::move(stmts), std::move(std::make_unique<PrimitiveType>("rỗng")), line, column};
 }
 
-bao::Token bao::Parser::current() {
+auto
+bao::Parser :: current() -> bao::Token {
     return this->tokens[this->it];
 }
 
 // --- Helpers ---
 
-void bao::Parser::next() {
+void
+bao::Parser :: next() {
     this->it++;
     if (this->it == this->tokens.size()) {
         throw out_of_range("Lỗi nội bộ: Không còn token");
     }
 }
 
-bao::Token bao::Parser::peek() {
+auto
+bao::Parser :: peek() -> bao::Token {
     if (this->tokens[this->it].type == TokenType::EndOfFile) {
         throw out_of_range("Lỗi nội bộ: Không còn token để hé lộ");
     }
     return this->tokens[this->it + 1];
 }
 
-void bao::Parser::skip_newlines() {
+void
+bao::Parser :: skip_newlines() {
     while (this->current().type == TokenType::Newline && this->current().type != TokenType::EndOfFile) {
         this->next();
     }
 }
 
-int bao::Parser::current_precedence() {
+auto
+bao::Parser :: current_precedence() -> int {
     bao::Token current = this->current();
     if (current.type == bao::TokenType::Operator || current.type == bao::TokenType::Keyword) {
         if (precedences.contains(current.value)) {
@@ -268,7 +276,8 @@ int bao::Parser::current_precedence() {
 
 // --- Statements ---
 
-std::unique_ptr<bao::ast::StmtNode> bao::Parser::parse_statement() {
+auto
+bao::Parser :: parse_statement() -> std::unique_ptr<bao::ast::StmtNode> {
     std::unique_ptr<ast::StmtNode> stmt;
     try {
         utils::match(this->current().value,{
@@ -301,11 +310,18 @@ std::unique_ptr<bao::ast::StmtNode> bao::Parser::parse_statement() {
                 }
             }
         }, {
-            [this, &stmt]() {
-                    stmt = nullptr;
-                    throw utils::CompilerError::new_error(
-                        this->filename, this->directory, "Câu lệnh không xác định", this->current().line, this->current().column
-                    );
+            [&]() {
+                    if (this->current().type == TokenType::Identifier) {
+                        try {
+                            stmt = this->parse_varassignstmt();
+                        } catch (...) {
+                            throw;
+                        }
+                    } else {
+                        throw utils::CompilerError::new_error(
+                            this->filename, this->directory, "Câu lệnh không xác định", this->current().line, this->current().column
+                        );
+                    }
                 }
             }
         );
@@ -315,7 +331,8 @@ std::unique_ptr<bao::ast::StmtNode> bao::Parser::parse_statement() {
     return stmt;
 }
 
-std::unique_ptr<bao::ast::RetStmt> bao::Parser::parse_retstmt() {
+auto
+bao::Parser :: parse_retstmt() -> std::unique_ptr<bao::ast::RetStmt> {
     auto line = this->current().line;
     auto column = this->current().column;
     this->next(); // Consumes 'trả về'
@@ -331,13 +348,18 @@ std::unique_ptr<bao::ast::RetStmt> bao::Parser::parse_retstmt() {
     }
 }
 
-std::unique_ptr<bao::ast::VarDeclStmt> bao::Parser::parse_vardeclstmt(bool isConst) {
+auto
+bao::Parser :: parse_vardeclstmt(
+    bool isConst
+) -> std::unique_ptr<bao::ast::VarDeclStmt> {
     auto line = this->current().line;
     auto column = this->current().column;
     this->next(); // Consumes 'hằng' or 'biến'
     if (this->current().type != TokenType::Identifier) {
         throw utils::CompilerError::new_error(
-            this->filename, this->directory, "Mong đợi tên biến tại đây", this->current().line, this->current().column
+            this->filename, this->directory, 
+            "Mong đợi tên biến tại đây", 
+            this->current().line, this->current().column
         );
     }
     try {
@@ -354,13 +376,49 @@ std::unique_ptr<bao::ast::VarDeclStmt> bao::Parser::parse_vardeclstmt(bool isCon
                 "Hằng số phải có giá trị khởi tạo", 
                 temp_line, temp_column);
         }
-        return std::make_unique<ast::VarDeclStmt>(varNode, std::move(val), line, column);
+        return std::make_unique<ast::VarDeclStmt>(
+            varNode, 
+            std::move(val), 
+            line, column
+        );
     } catch ([[maybe_unused]] exception& e) {
         throw;
     }
 }
 
-bao::ast::VarNode bao::Parser::parse_var(bool isConst) {
+auto
+bao::Parser :: parse_varassignstmt() -> std::unique_ptr<bao::ast::VarAssignStmt> {
+    auto line = this->current().line;
+    auto column = this->current().column;
+    std::string var_name = this->current().value;
+    this->next();
+
+    if (this->current().value != ":=") {
+        throw utils::CompilerError::new_error(
+            this->filename, this->directory, 
+            "Mong đợi ':=' tại đây",
+            this->current().line, this->current().column
+        );
+    }
+    this->next();
+
+    std::unique_ptr<ast::ExprNode> val;
+    try {
+        val = this->parse_expression(0);
+    } catch (...) {
+        throw;
+    }
+    return std::make_unique<ast::VarAssignStmt>(
+        var_name,
+        std::move(val),
+        line, column
+    );
+}
+
+auto
+bao::Parser :: parse_var(
+    bool isConst
+) -> bao::ast::VarNode  {
     auto var_line = this->current().line;
     auto var_column = this->current().column;
     std::string var_name = this->current().value;
@@ -379,7 +437,8 @@ bao::ast::VarNode bao::Parser::parse_var(bool isConst) {
     }
 }
 
-std::unique_ptr<bao::Type> bao::Parser::parse_type() {
+auto
+bao::Parser :: parse_type() -> std::unique_ptr<bao::Type> {
     if (this->current().type != TokenType::Identifier) {
         throw utils::CompilerError::new_error(
         this->filename, this->directory, "Kiểu dữ liệu không xác định", this->current().line, this->current().column
@@ -396,7 +455,10 @@ std::unique_ptr<bao::Type> bao::Parser::parse_type() {
     return std::make_unique<PrimitiveType>(type_name);
 }
 
-std::unique_ptr<bao::ast::ExprNode> bao::Parser::parse_expression(int minPrec) {
+auto
+bao::Parser :: parse_expression(
+    int minPrec
+) -> std::unique_ptr<bao::ast::ExprNode> {
     try {
         // Expression's position
         auto line = this->current().line;
@@ -428,7 +490,8 @@ std::unique_ptr<bao::ast::ExprNode> bao::Parser::parse_expression(int minPrec) {
     }
 }
 
-std::unique_ptr<bao::ast::ExprNode> bao::Parser::parse_primary() {
+auto
+bao::Parser :: parse_primary() -> std::unique_ptr<bao::ast::ExprNode>  {
     const auto current = this->current();
     const auto val = current.value;
     auto line = this->current().line;
