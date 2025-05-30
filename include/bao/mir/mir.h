@@ -58,11 +58,39 @@ namespace bao::mir {
         virtual ~Instruction() = default;
     };
 
-    struct AssignInst final : Instruction {
+    /*
+    * Instruction to allocate on the stack
+    *
+    * dst (type)
+    */
+    struct AllocInst final : Instruction {
+        Value dst;
+
+        explicit AllocInst(Value& dst) : dst(dst) {}
+    };
+
+    /*
+    * Instruction to store data into an alloc
+    * 
+    * src -> dst
+    */
+    struct StoreInst final : Instruction {
+        Value src;
+        Value dst;
+
+        explicit StoreInst(Value&& src, Value& dst) : src(std::move(src)), dst(dst) {}
+    };
+
+    /*
+    * Instruction to load data from an alloc
+    *
+    * dst <- src
+    */
+    struct LoadInst final : Instruction {
         Value dst;
         Value src;
 
-        explicit AssignInst(Value&& dst, Value&& src) : dst(std::move(dst)), src(std::move(src)) {}
+        explicit LoadInst(Value& dst, Value&& src) : dst(dst), src(std::move(src)) {}
     };
 
     struct CallInst final : Instruction {

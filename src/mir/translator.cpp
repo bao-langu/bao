@@ -7,15 +7,22 @@
 #include "bao/utils.h"
 #include <bao/mir/translator.h>
 #include <exception>
+#include <iostream>
 #include <memory>
 
-bao::mir::Translator::Translator(ast::Program &&program): program(std::move(program)) {
+// ⚠ Warning: This code contains non-standard spacing and formatting.
+// ⚠ Readability over orthodoxy. Fight me, ISO committee.
+
+bao::mir::Translator :: Translator(
+    ast::Program &&program
+) : program(std::move(program)) {
     this->module = Module();
     this->module.name = this->program.name;
     this->module.path = this->program.path;
 }
 
-bao::mir::Module bao::mir::Translator::translate() {
+auto
+bao::mir::Translator :: translate() -> bao::mir::Module {
     // Iterate through all functions in the program
     std::vector<std::exception_ptr> exceptions;
     try {
@@ -31,7 +38,10 @@ bao::mir::Module bao::mir::Translator::translate() {
     return std::move(module);
 }
 
-bao::mir::Function bao::mir::Translator::translate_function(const ast::FuncNode& func) {
+auto
+bao::mir::Translator :: translate_function(
+    const ast::FuncNode& func
+) -> bao::mir::Function {
     Function function;
     std::string main_sym = "main"; // For most platforms
     function.name = func.get_name() == "chính" ? main_sym : func.get_name();
@@ -64,15 +74,23 @@ bao::mir::Function bao::mir::Translator::translate_function(const ast::FuncNode&
     return std::move(function);
 }
 
-void bao::mir::Translator::translate_statement(Function& func, ast::StmtNode* stmt) {
+void 
+bao::mir::Translator :: translate_statement(
+    Function& func, 
+    ast::StmtNode* stmt
+) {
     try {
         if (const auto ret_stmt = dynamic_cast<ast::RetStmt*>(stmt)) { // Check if the statement is a return statement
             if (ret_stmt->get_val()) {
                 // Translate the return value expression
-                auto inst = std::make_unique<ReturnInst>(
-                    std::move(this->translate_expression(func, stmt, ret_stmt->get_val())));
                 func.blocks.back()
-                    .instructions.push_back(std::move(inst));
+                    .instructions.push_back(
+                        std::make_unique<ReturnInst>(
+                            std::move(
+                                this->translate_expression(func, stmt, ret_stmt->get_val())
+                            )
+                        )
+                    );
             } else {
                 // Handle the case where the return value is null
                 auto inst = std::make_unique<ReturnInst>(
@@ -80,30 +98,99 @@ void bao::mir::Translator::translate_statement(Function& func, ast::StmtNode* st
                 func.blocks.back()
                     .instructions.push_back(std::move(inst));
             }
+        } else if (const auto vardecl_stmt = dynamic_cast<ast::VarDeclStmt*>(stmt)) {
+            auto& var = vardecl_stmt->get_var();
+            Value dst{
+                ValueKind::Variable,
+                var.get_name(),
+                var.get_type()->clone()
+            };
+            // Create a stack allocated variable
+            func.blocks.back()
+                .instructions
+                .push_back(
+                    std::make_unique<AllocInst>(
+                        dst
+                    )
+                );
+            // Store a value to it if it has an initializer
+            if (vardecl_stmt->get_val()) {
+                auto src = 
+                    this->translate_expression(
+                        func, 
+                        stmt, 
+                        vardecl_stmt->get_val()
+                    );
+                func.blocks.back()
+                    .instructions
+                    .push_back(
+                        std::make_unique<StoreInst>(
+                            std::move(src),
+                            dst
+                        )
+                    );
+            }
         } else {
             // Handle other statement types
+            auto [line, column] = stmt->pos();
+            std::cout 
+                << std::format(
+                    "Cảnh báo: Bắt gặp kiểu câu lệnh không xác định (Dòng {}, Cột {})",
+                    line, column
+                )
+                << std::endl;
         }
     } catch ([[maybe_unused]] std::exception& e) {
         throw;
     }
 }
 
-bao::mir::Value bao::mir::Translator::translate_expression(Function& func, ast::StmtNode* stmt, ast::ExprNode* expr) {
+auto
+bao::mir::Translator :: translate_expression(
+    Function& func, 
+    ast::StmtNode* stmt, // For some context
+    ast::ExprNode* expr
+) -> bao::mir::Value {
+    // Most basic, number literal
     if (const auto numlitexpr = dynamic_cast<ast::NumLitExpr*>(expr)) {
-        Value value;
-        value.kind = ValueKind::Constant;
-        value.name = numlitexpr->get_val();
-        value.type = numlitexpr->get_type()->clone();
+        Value value {
+            ValueKind::Constant,
+            numlitexpr->get_val(),
+            numlitexpr->get_type()->clone()
+        };
         return std::move(value);
     }
+    // Extract the value from a var
+    if (const auto varexpr = dynamic_cast<ast::VarExpr*>(expr)) {
+        Value dst {
+            ValueKind::Temporary,
+            "__temp" + std::to_string(func.temp_var_count++),
+            varexpr->get_type()->clone()
+        };
+        // Translation will not check for validity as it's checked in Analyzer already
+        Value src {
+            ValueKind::Variable,
+            varexpr->get_name(),
+            varexpr->get_type()->clone()
+        };
+        func.blocks.back().instructions.push_back(
+            std::make_unique<LoadInst>(
+                dst,
+                std::move(src)
+            )
+        );
+        return std::move(dst);
+    }
+    // Binary expresions
     if (const auto binexpr = dynamic_cast<ast::BinExpr*>(expr)) {
         auto left = translate_expression(func, stmt, binexpr->get_left());
         auto right = translate_expression(func, stmt, binexpr->get_right());
-        auto type = expr->get_type();
-        Value dst;
-        dst.kind = ValueKind::Temporary;
-        dst.name = "__temp" + std::to_string(func.temp_var_count++);
-        dst.type = binexpr->get_type()->clone();
+        auto type = binexpr->get_type();
+        Value dst {
+            ValueKind::Temporary,
+            "__temp" + std::to_string(func.temp_var_count++),
+            type->clone()
+        };
         try {
             utils::match(binexpr->get_op(), {
                 {

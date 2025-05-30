@@ -174,11 +174,19 @@ void bao::utils::mir::print_block(const bao::mir::BasicBlock &block, const strin
 
 void bao::utils::mir::print_instruction(const bao::mir::Instruction* inst, const string &padding) {
     cout << padding;    
-    if (const auto assign = dynamic_cast<const bao::mir::AssignInst*>(inst)) {
-        cout << "assigninst: ";
-        print_value(assign->dst, "");
-        cout << " = ";
-        print_value(assign->src, "");
+    if (const auto alloc = dynamic_cast<const bao::mir::AllocInst*>(inst)) {
+        cout << "allocinst: ";
+        print_value(alloc->dst, "");
+    } else if (const auto store = dynamic_cast<const bao::mir::StoreInst*>(inst)) {
+        cout << "storeinst: ";
+        print_value(store->src, "");
+        cout << " -> ";
+        print_value(store->dst, "");
+    } else if (const auto load = dynamic_cast<const bao::mir::LoadInst*>(inst)) {
+        cout << "loadinst: ";
+        print_value(load->dst, "");
+        cout << " <- ";
+        print_value(load->src, "");
     } else if (const auto call = dynamic_cast<const bao::mir::CallInst*>(inst)) {
         cout << "callinst: ";
         cout << "Tên hàm: " << call->function_name << endl;
@@ -255,10 +263,28 @@ void bao::utils::mir::print_value(const bao::mir::Value &value, const string &pa
     cout << padding;
     switch (value.kind) {
         case bao::mir::ValueKind::Constant:
-            cout << "const(" << type_to_string(value.type.get()) << ": " << value.name << ")";
+            cout << std::format(
+                "const({}<{}> {})",
+                type_to_string(value.type.get()),
+                value.type->get_name(),
+                value.name
+            );
             break;
         case bao::mir::ValueKind::Temporary:
-            cout << "temp(" << type_to_string(value.type.get()) << ": " << value.name << ")";
+            cout << std::format(
+                "temp({}<{}> {})",
+                type_to_string(value.type.get()),
+                value.type->get_name(),
+                value.name
+            );
+            break;
+        case bao::mir::ValueKind::Variable:
+            cout << std::format(
+                "var({}<{}> {})",
+                type_to_string(value.type.get()),
+                value.type->get_name(),
+                value.name
+            );
             break;
         default:
             cout << "Giá trị không xác định";

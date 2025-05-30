@@ -47,11 +47,13 @@ void semanticsTest();
 void parserTest();
 void lexerTest();
 void readerTest();
-// int icuTest();
+/*
+* Test from bottom up
+*/
 
 // Main test function
 int test(int argc, char* argv[]) {
-    semanticsTest();
+    mirTest();
     return 0;
 }
 
