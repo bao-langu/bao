@@ -31,7 +31,12 @@ using std::endl;
 using std::istringstream;
 using std::ostringstream;
 
-bool bao::utils::arg_contains(const int argc, char *argv[], const char *target) {
+auto 
+bao::utils :: arg_contains(
+    const int argc, 
+    char *argv[],
+    const char *target
+) -> bool {
     for (int i = 1; i < argc; ++i) {
         if (strcmp(argv[i], target) == 0) {
             return true;
@@ -40,17 +45,24 @@ bool bao::utils::arg_contains(const int argc, char *argv[], const char *target) 
     return false;
 }
 
-void bao::utils::print_usage() {
+void 
+bao::utils :: print_usage() {
     cout << "Cú pháp: baoc [--test] [--huong-dan]" << endl;
     cout << "--test: Chạy tests" << endl;
     cout << "--huong-dan: Hiện thông tin về cách sử dụng" << endl;
 }
 
-void bao::utils::print_token(const Token &token) {
+void
+bao::utils :: print_token(
+    const Token &token
+) {
     cout << "Token: " << token.value << ", Loại: " << token_type_map.at(token.type) << ", Dòng: " << token.line << ", Cột: " << token.column << endl;
 }
 
-void bao::utils::ast::print_program(const bao::ast::Program &program) {
+void 
+bao::utils::ast :: print_program(
+    const bao::ast::Program &program
+) {
     cout << "Nội dung chương trình:" << endl;
     cout << "   Tên: " << program.name << endl;
     cout << "   Đường dẫn: " << program.path << endl;
@@ -60,7 +72,11 @@ void bao::utils::ast::print_program(const bao::ast::Program &program) {
     }
 }
 
-void bao::utils::ast::print_function(const bao::ast::FuncNode& func, const string &padding) {
+void 
+bao::utils::ast :: print_function(
+    const bao::ast::FuncNode& func, 
+    const string &padding
+) {
     auto [line, column] = func.pos();
     std::string type = type_to_string(func.get_return_type());
     const auto message = std::format(
@@ -73,7 +89,11 @@ void bao::utils::ast::print_function(const bao::ast::FuncNode& func, const strin
     }
 }
 
-void bao::utils::ast::print_statement(bao::ast::StmtNode* stmt, const string &padding) {
+void 
+bao::utils::ast :: print_statement(
+    bao::ast::StmtNode* stmt, 
+    const string &padding
+) {
     if (!stmt) {
         cout << padding + "   Câu lệnh không xác định" << endl;
         return;
@@ -125,7 +145,11 @@ void bao::utils::ast::print_statement(bao::ast::StmtNode* stmt, const string &pa
     std::cout << padding << std::endl;
 }
 
-void bao::utils::ast::print_expression(bao::ast::ExprNode* expr, const string &padding) {
+void 
+bao::utils::ast :: print_expression(
+    bao::ast::ExprNode* expr, 
+    const string &padding
+) {
     auto [line, column] = expr->pos();
     std::string type = type_to_string(expr->get_type());
     if (const auto num_expr = dynamic_cast<bao::ast::NumLitExpr*>(expr)) {
@@ -155,7 +179,10 @@ void bao::utils::ast::print_expression(bao::ast::ExprNode* expr, const string &p
     }
 }
 
-void bao::utils::mir::print_module(const bao::mir::Module &module) {
+void 
+bao::utils :: mir::print_module(
+    const bao::mir::Module &module
+) {
     cout << "Nội dung module:" << endl;
     cout << "   Tên: " << module.name << endl;
     cout << "   Đường dẫn: " << module.path << endl;
@@ -165,7 +192,11 @@ void bao::utils::mir::print_module(const bao::mir::Module &module) {
     }
 }
 
-void bao::utils::mir::print_function(const bao::mir::Function &func, const string &padding) {
+void 
+bao::utils::mir :: print_function(
+    const bao::mir::Function &func, 
+    const string &padding
+) {
     cout << padding + "Hàm: " << func.name << endl;
     cout << padding + "   Kiểu trả về: " << type_to_string(func.return_type.get()) << ": "<< func.return_type->get_name() << endl;
     /*
@@ -179,14 +210,22 @@ void bao::utils::mir::print_function(const bao::mir::Function &func, const strin
     }
 }
 
-void bao::utils::mir::print_block(const bao::mir::BasicBlock &block, const string &padding) {
+void 
+bao::utils::mir :: print_block(
+    const bao::mir::BasicBlock &block, 
+    const string &padding
+) {
     cout << padding + "Khối: " << block.label << endl;
     for (const auto &inst : block.instructions) {
         print_instruction(inst.get(), padding + " | ");
     }
 }
 
-void bao::utils::mir::print_instruction(const bao::mir::Instruction* inst, const string &padding) {
+void 
+bao::utils::mir :: print_instruction(
+    const bao::mir::Instruction* inst, 
+    const string &padding
+) {
     cout << padding;    
     if (const auto alloc = dynamic_cast<const bao::mir::AllocInst*>(inst)) {
         cout << "allocinst: ";
@@ -273,7 +312,11 @@ void bao::utils::mir::print_instruction(const bao::mir::Instruction* inst, const
     cout << endl;
 }
 
-void bao::utils::mir::print_value(const bao::mir::Value &value, const string &padding) {
+void 
+bao::utils::mir :: print_value(
+    const bao::mir::Value &value, 
+    const string &padding
+) {
     cout << padding;
     switch (value.kind) {
         case bao::mir::ValueKind::Constant:
@@ -306,10 +349,12 @@ void bao::utils::mir::print_value(const bao::mir::Value &value, const string &pa
     }
 }
 
-void bao::utils::match(
+void 
+bao::utils :: match(
     const string& val,
     const std::unordered_map<string, std::function<void()>>& pattern,
-    const std::function<void()>& default_case) {
+    const std::function<void()>& default_case
+) {
     if (pattern.contains(val)) {
         pattern.at(val)();
     } else {
@@ -317,7 +362,11 @@ void bao::utils::match(
     }
 }
 
-string bao::utils::pad_lines(const string &input, const string &padding) {
+auto
+bao::utils :: pad_lines(
+    const string &input, 
+    const string &padding
+) -> std::string {
     istringstream iss(input);
     ostringstream oss;
     string line;
@@ -331,7 +380,10 @@ string bao::utils::pad_lines(const string &input, const string &padding) {
     return oss.str();
 }
 
-bool bao::utils::is_literal(bao::ast::ExprNode* expr) {
+auto 
+bao::utils :: is_literal(
+    bao::ast::ExprNode* expr
+) -> bool {
     // Null check
     if (!expr) {
         return false;
@@ -345,7 +397,11 @@ bool bao::utils::is_literal(bao::ast::ExprNode* expr) {
     return false;
 }
 
-void bao::utils::cast_literal(bao::ast::ExprNode *expr, Type *type) {
+void 
+bao::utils :: cast_literal(
+    bao::ast::ExprNode *expr, 
+    bao::Type *type
+) {
     try {
         expr->set_type(type->clone());
         if (auto bin_expr = dynamic_cast<bao::ast::BinExpr*>(expr)) {
@@ -353,11 +409,20 @@ void bao::utils::cast_literal(bao::ast::ExprNode *expr, Type *type) {
             bao::utils::cast_literal(bin_expr->get_right(), type);
         }
     } catch (...) {
-        throw std::runtime_error(std::format("Lỗi nội bộ: Không nhận dạng được kiểu chuyển: {}", type->get_name()));
+        throw std::runtime_error(
+            std::format(
+                "Lỗi nội bộ: Không nhận dạng được kiểu chuyển: {}", 
+                type->get_name()
+            )
+        );
     }
 }
 
-bool bao::utils::can_cast_literal(const bao::ast::ExprNode *expr, const Type *type) {
+auto 
+bao::utils :: can_cast_literal(
+    const bao::ast::ExprNode *expr, 
+    const Type *type
+) -> bool {
     if (!expr->get_type()) {
         return false;
     }
@@ -389,7 +454,11 @@ bool bao::utils::can_cast_literal(const bao::ast::ExprNode *expr, const Type *ty
     }
 }
 
-llvm::Type* bao::utils::get_llvm_type(llvm::IRBuilder<> &builder, bao::Type* type) {
+auto 
+bao::utils :: get_llvm_type(
+    llvm::IRBuilder<> &builder, 
+    bao::Type* type
+) -> llvm::Type* {
     if (auto prim = dynamic_cast<bao::PrimitiveType*>(type)) {
         switch (prim->get_type()) {
         // LLVM does not differentiate signed and unsigned types
@@ -414,7 +483,10 @@ llvm::Type* bao::utils::get_llvm_type(llvm::IRBuilder<> &builder, bao::Type* typ
     throw std::runtime_error(std::format("-> Lỗi nội bộ: Không thể chuyển kiểu: {}", type->get_name()));
 }
 
-std::string bao::utils::type_to_string(Type *type) {
+auto 
+bao::utils :: type_to_string(
+    bao::Type *type
+) -> std::string {
     if (auto prim = dynamic_cast<PrimitiveType*>(type)) {
         return "PrimitiveType";
     } else if (auto unknown = dynamic_cast<UnknownType*>(type)) {
@@ -425,7 +497,8 @@ std::string bao::utils::type_to_string(Type *type) {
 }
 
 // Helper function guide Linux into the program
-int bao::utils::generate_start() {
+auto 
+bao::utils :: generate_start() -> int {
     // LLVM module
     llvm::LLVMContext context;
     llvm::Module module("_start", context);
@@ -542,13 +615,19 @@ int bao::utils::generate_start() {
     return 0;
 }
 
-void bao::utils::trim(std::string& str) {
+void 
+bao::utils :: trim(
+    std::string& str
+) {
     while (!str.empty() && (str.back() == '\n' || str.back() == '\r')) {
         str.pop_back();
     }
 }
 
-bool bao::utils::is_signed(bao::Type* type) {
+auto
+bao::utils :: is_signed(
+    bao::Type* type
+) -> bool {
     const auto type_name = type->get_name();
     std::vector<std::string> valid = {"Z32", "Z64", "R32", "R64"};
     if (std::any_of(valid.begin(), valid.end(), 
@@ -558,7 +637,10 @@ bool bao::utils::is_signed(bao::Type* type) {
     return false;
 }
 
-bool bao::utils::is_float(bao::Type* type) {
+auto
+bao::utils :: is_float(
+    bao::Type* type
+) -> bool {
     const auto type_name = type->get_name();
     std::vector<std::string> valid = {"R32", "R64"};
     if (std::any_of(valid.begin(), valid.end(), 

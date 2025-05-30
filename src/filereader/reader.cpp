@@ -22,11 +22,14 @@ using icu::Normalizer2;
 using icu::UnicodeString;
 using std::out_of_range;
 
-bao::Reader::Reader(string path) {
+bao::Reader :: Reader(
+    std::string path
+) {
     this->path = std::move(path);
 }
 
-string bao::Reader::read() const {
+std::string 
+bao::Reader :: read() const {
     // --- Get the full src path ---
     fs::path curr_dir = fs::current_path(); // Work directory
     fs::path src_path = path; // Src path input
@@ -61,7 +64,10 @@ string bao::Reader::read() const {
     return contents;
 }
 
-string bao::Reader::get_line(int target_line) const {
+std::string
+bao::Reader :: get_line(
+    int target_line
+) const {
     // --- Get the full src path ---
     fs::path curr_dir = fs::current_path(); // Work directory
     fs::path src_path = path; // Src path input
@@ -98,7 +104,10 @@ string bao::Reader::get_line(int target_line) const {
     throw out_of_range("Lỗi: dòng nằm ngoài số dòng của tệp");
 }
 
-string bao::Reader::normalize(const string& content) {
+auto
+bao::Reader :: normalize(
+    const std::string& content
+) -> std::string {
     // Error code object
     UErrorCode errorCode = U_ZERO_ERROR;
 

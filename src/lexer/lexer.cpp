@@ -15,7 +15,9 @@
 using std::out_of_range;
 
 // -- Lexer's constructor --
-bao::Lexer::Lexer(const string &source): it(UnicodeString::fromUTF8(source)) {
+bao::Lexer :: Lexer(
+    const string &source
+) : it(UnicodeString::fromUTF8(source)) {
     this->source = UnicodeString::fromUTF8(source);
     this->it.setToStart();
     this->current_line = 1;
@@ -24,10 +26,14 @@ bao::Lexer::Lexer(const string &source): it(UnicodeString::fromUTF8(source)) {
 }
 
 // -- Lexer's methods --
-bool is_new_line(UChar32 cp);
+auto 
+is_new_line(
+    UChar32 cp
+) -> bool;
 
 // Tokenize the source code
-void bao::Lexer::tokenize() {
+void 
+bao::Lexer :: tokenize() {
     while (this->current_code_point() != U_SENTINEL) {
         try {
             this->skip_whitespace(); // Skip whitespace characters
@@ -79,7 +85,8 @@ void bao::Lexer::tokenize() {
     this->tokens.push_back(Token{TokenType::EndOfFile, "\\0", this->current_line, this->current_column});
 }
 
-const vector<bao::Token> & bao::Lexer::get_tokens() const {
+const vector<bao::Token>& 
+bao::Lexer :: get_tokens() const {
     if (this->exceptions.empty()) {
         return this->tokens;
     }
@@ -87,7 +94,8 @@ const vector<bao::Token> & bao::Lexer::get_tokens() const {
 }
 
 // Get the current code point as a UTF-8 string
-string bao::Lexer::current_utf8() const {
+std::string 
+bao::Lexer :: current_utf8() const {
     const UnicodeString unicode_str(this->it.current32());
     string utf8str;
     unicode_str.toUTF8String(utf8str);
@@ -95,12 +103,14 @@ string bao::Lexer::current_utf8() const {
 }
 
 // Get the current code point as a UChar32
-UChar32 bao::Lexer::current_code_point() const {
+UChar32 
+bao::Lexer :: current_code_point() const {
     return this->it.current32();
 }
 
 // Get the next code point
-void bao::Lexer::next() {
+void 
+bao::Lexer :: next() {
     if (this->it.hasNext()) {
         this->code_point_index++;
         this->it.next32();
@@ -112,7 +122,8 @@ void bao::Lexer::next() {
 }
 
 // Peek at the next code point without advancing the iterator
-string bao::Lexer::peek() const {
+std::string 
+bao::Lexer :: peek() const {
     if (StringCharacterIterator copy(it); copy.hasNext()) {
         const UChar32 code_point = copy.next32();
         string utf8str;
@@ -125,7 +136,8 @@ string bao::Lexer::peek() const {
 }
 
 // Skip whitespace characters and newlines
-void bao::Lexer::skip_whitespace() {
+void 
+bao::Lexer :: skip_whitespace() {
     while (this->it.hasNext() && (this->current_utf8() == " " || is_new_line(this->current_code_point()))) {
         if (is_new_line(this->current_code_point())) {
             this->tokens.push_back(bao::Token{bao::TokenType::Newline, "\\n", this->current_line, this->current_column});
@@ -141,7 +153,10 @@ void bao::Lexer::skip_whitespace() {
 }
 
 // Seek to a specific code point index
-void bao::Lexer::seek(const int code_point_index) {
+void 
+bao::Lexer :: seek(
+    const int code_point_index
+) {
     it.setToStart(); // Reset iterator to the start
     int i;
     for (i = 0; i < code_point_index && it.hasNext(); ++i) {
@@ -153,7 +168,8 @@ void bao::Lexer::seek(const int code_point_index) {
 }
 
 // Handle identifiers
-bao::Token bao::Lexer::handle_identifier() {
+auto
+bao::Lexer :: handle_identifier() -> bao::Token {
     try {
         const int line = this->current_line;
         const int column = this->current_column;
@@ -204,7 +220,8 @@ bao::Token bao::Lexer::handle_identifier() {
 }
 
 // Handle numbers
-bao::Token bao::Lexer::handle_number() {
+auto
+bao::Lexer :: handle_number() -> bao::Token {
     try {
         const int line = this->current_line;
         const int column = this->current_column;
@@ -231,7 +248,8 @@ bao::Token bao::Lexer::handle_number() {
     }
 }
 
-bao::Token bao::Lexer::handle_symbols() {
+auto 
+bao::Lexer :: handle_symbols() -> bao::Token {
     try {
         const int line = this->current_line;
         const int column = this->current_column;
@@ -251,7 +269,10 @@ bao::Token bao::Lexer::handle_symbols() {
     }
 }
 
-bool is_new_line(const UChar32 cp) {
+auto 
+is_new_line(
+    const UChar32 cp
+) -> bool {
     return cp == 0x000A; // LF
            // cp == 0x000D || // CR
            // cp == 0x000C || // FF
