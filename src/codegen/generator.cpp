@@ -16,12 +16,14 @@
 #include <llvm/IR/Intrinsics.h>
 #include <iostream>
 
-bao::Generator::Generator(bao::mir::Module&& mir_module
-    ) : mir_module(std::move(mir_module)), 
+bao::Generator :: Generator(
+    bao::mir::Module&& mir_module
+) : mir_module(std::move(mir_module)), 
     llvm_module(this->mir_module.name, this->context),
     ir_builder(this->context) {}
 
-void bao::Generator::generate() {
+void
+bao::Generator :: generate() {
     std::vector<std::exception_ptr> exceptions;
     for (auto& func : this->mir_module.functions) {
         try {
@@ -35,11 +37,15 @@ void bao::Generator::generate() {
     }
 }
 
-void bao::Generator::print_source() {
+void
+bao::Generator :: print_source() {
     this->llvm_module.print(llvm::outs(), nullptr);
 }
 
-int bao::Generator::create_object(const std::string& filename) {
+auto
+bao::Generator :: create_object(
+    const std::string& filename
+) -> int {
     llvm::InitializeNativeTarget();
     llvm::InitializeNativeTargetAsmParser();
     llvm::InitializeNativeTargetAsmPrinter();
@@ -81,7 +87,10 @@ int bao::Generator::create_object(const std::string& filename) {
     return 0;
 }
 
-void bao::Generator::generate_function(mir::Function& mir_func) {
+void
+bao::Generator :: generate_function(
+    mir::Function& mir_func
+) {
     this->current_context = {};
     try {
         // Get function type - Can be thrown an error
@@ -128,7 +137,11 @@ void bao::Generator::generate_function(mir::Function& mir_func) {
     }
 }
 
-void bao::Generator::generate_block(llvm::BasicBlock* ir_block, bao::mir::BasicBlock& mir_block) {
+void
+bao::Generator :: generate_block(
+    llvm::BasicBlock* ir_block, 
+    bao::mir::BasicBlock& mir_block
+) {
     this->ir_builder.SetInsertPoint(ir_block);
     std::vector<std::exception_ptr> exceptions;
     for (auto& mir_inst : mir_block.instructions) {
@@ -143,8 +156,12 @@ void bao::Generator::generate_block(llvm::BasicBlock* ir_block, bao::mir::BasicB
     }
 }
 
-void bao::Generator::generate_instruction(bao::mir::Instruction* mir_inst) {
+void
+bao::Generator :: generate_instruction(
+    bao::mir::Instruction* mir_inst
+) {
     try {
+        // Return instruction
         if (auto retInst = dynamic_cast<mir::ReturnInst*>(mir_inst)) {
             auto val = get_llvm_value(retInst->ret_val);
             if (val) {
@@ -154,6 +171,46 @@ void bao::Generator::generate_instruction(bao::mir::Instruction* mir_inst) {
             }
             return;
         }
+
+        // Stack allocation instruction
+        if (auto allocInst = dynamic_cast<mir::AllocInst*>(mir_inst)) {
+            auto alloca = this->ir_builder.CreateAlloca(
+                utils::get_llvm_type(
+                    this->ir_builder, 
+                    allocInst->dst.type.get()
+                )
+            );
+            alloca->setName(allocInst->dst.name);
+            current_context[allocInst->dst.name] = alloca;
+            return;
+        }
+
+        // Store to a pointer
+        if (auto storeInst = dynamic_cast<mir::StoreInst*>(mir_inst)) {
+            auto src = this->get_llvm_value(storeInst->src);
+            auto dst = this->get_llvm_value(storeInst->dst);
+            // TODO: Handle volatility
+            this->ir_builder.CreateStore(src, dst, false);
+            return;
+        }
+
+        // Load from an alloca
+        if (auto loadInst = dynamic_cast<mir::LoadInst*>(mir_inst)) {
+            auto src = this->get_llvm_value(loadInst->src);
+
+            auto load = this->ir_builder.CreateLoad(
+                utils::get_llvm_type(
+                    this->ir_builder,
+                    loadInst->dst.type.get()
+                ),
+                src
+            );
+            load->setName(loadInst->dst.name);
+            current_context[loadInst->dst.name] = load;
+            return;
+        }
+
+        // Arithmatic instructions
         if (auto binInst = dynamic_cast<mir::BinInst*>(mir_inst)) {
             auto left = get_llvm_value(binInst->left);
             auto right = get_llvm_value(binInst->right);
@@ -340,7 +397,10 @@ void bao::Generator::generate_instruction(bao::mir::Instruction* mir_inst) {
     }
 }
 
-llvm::Value* bao::Generator::get_llvm_value(bao::mir::Value &mir_value) {
+auto
+bao::Generator :: get_llvm_value(
+    bao::mir::Value &mir_value
+) -> llvm::Value* {
     try {
         switch (mir_value.kind) {
         case bao::mir::ValueKind::Constant:
@@ -359,9 +419,9 @@ llvm::Value* bao::Generator::get_llvm_value(bao::mir::Value &mir_value) {
                 }
             }
         case bao::mir::ValueKind::Temporary:
+        case bao::mir::ValueKind::Variable:
             // In faith I trust this won't break (pls don't break)
             return current_context.at(mir_value.name);
-        case bao::mir::ValueKind::Variable:
         default:
             ;
         }

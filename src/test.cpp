@@ -39,9 +39,8 @@ using icu::UnicodeString;
 using icu::StringCharacterIterator;
 
 // --- Test functions ---
-void linuxStartTest();
+
 void compilerTest();
-void llvmTest();
 void mirTest();
 void semanticsTest();
 void parserTest();
@@ -51,9 +50,12 @@ void readerTest();
 * Test from bottom up
 */
 
+void linuxStartTest();
+void llvmTest();
+
 // Main test function
 int test(int argc, char* argv[]) {
-    mirTest();
+    compilerTest();
     return 0;
 }
 
