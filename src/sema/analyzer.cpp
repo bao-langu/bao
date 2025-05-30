@@ -3,22 +3,26 @@
 //
 
 #include "bao/parser/ast.h"
+#include "bao/sema/symtabl.h"
 #include "bao/utils.h"
 #include <bao/sema/analyzer.h>
 #include <exception>
 
-bao::Analyzer::Analyzer(ast::Program &&program) : program(std::move(program)) {
+bao::Analyzer :: Analyzer(
+    ast::Program &&program
+) : program(std::move(program)) {
     this->symbolTable = sema::SymbolTable();
 }
 
-bao::ast::Program bao::Analyzer::analyze_program() {
+auto
+bao::Analyzer :: analyze_program() -> bao::ast::Program {
     // Forward declaration of functions
     for (auto& func : program.funcs) {
         // Insert the function into the symbol table
-        sema::SymbolInfo info{};
-        info.type = sema::SymbolType::Function;
-        info.datatype = func.get_return_type();
-        info.scopeLevel = 0; // Global scope
+        sema::SymbolInfo info {
+            sema::SymbolType::Function,
+            func.get_return_type()
+        };
         this->symbolTable.insert(func.get_name(), info);
     }
 
@@ -41,15 +45,17 @@ bao::ast::Program bao::Analyzer::analyze_program() {
     return std::move(program);
 }
 
-void bao::Analyzer::analyze_function(const ast::FuncNode &func) {
-    sema::SymbolTable localTable{};
+void 
+bao::Analyzer :: analyze_function(
+    const ast::FuncNode &func
+) {
+    sema::SymbolTable localTable(&this->symbolTable);
     // Insert param into the local symbol table
     for (auto& param : func.get_params()) {
         // Insert the parameter into the local symbol table
         sema::SymbolInfo info{};
         info.type = sema::SymbolType::Variable;
         info.datatype = param.get_type();
-        info.scopeLevel = 1; // Local scope
         localTable.insert(param.get_name(), info);
     }
 
@@ -64,58 +70,40 @@ void bao::Analyzer::analyze_function(const ast::FuncNode &func) {
 
     if (!exceptions.empty()) {
         auto [line, column] = func.pos();
-        const std::string errorMessage = std::format("\033[34m@{}\033[0m -> {} (Dòng {}, Cột {}):\n{}",
-                                                func.get_name(),
-                                                func.get_return_type()->get_name(),
-                                                line,
-                                                column,
-                                                utils::pad_lines(utils::ErrorList(exceptions).what(), " | "));
+        const std::string errorMessage = 
+            std::format("\033[34m@{}\033[0m -> {} (Dòng {}, Cột {}):\n{}",
+            func.get_name(),
+            func.get_return_type()->get_name(),
+            line,
+            column,
+            utils::pad_lines(utils::ErrorList(exceptions).what(), " | "));
         throw std::runtime_error(errorMessage);
     }
 }
 
-void bao::Analyzer::analyze_statement(sema::SymbolTable &parentTable, ast::StmtNode* stmt, Type* return_type) {
-    if (const auto* retStmt = dynamic_cast<ast::RetStmt*>(stmt)) {
-        // Analyze return statement
-        if (retStmt->get_val()) {
-            try {
-                analyze_expression(parentTable, retStmt->get_val());
-            } catch (...) {
-                throw;
-            }
+void 
+bao::Analyzer :: analyze_statement(
+    sema::SymbolTable &parentTable, 
+    ast::StmtNode* stmt, 
+    Type* return_type
+) {
+    if (auto retStmt = dynamic_cast<ast::RetStmt*>(stmt)) {
+        try {
+            this->analyze_retstmt(parentTable, retStmt, return_type);
+        } catch (...) {
+            throw;
         }
-        // Check if the return type matches the function's return type
-        if (return_type->get_name() != "rỗng") {
-            // Check if the return type matches the function's return type
-            if (retStmt->get_val()) {
-
-                // TODO: For now check only the type name, check it better later
-                if (return_type->get_name() == retStmt->get_val()->get_type()->get_name()) {
-                    return;
-                }
-
-                auto val = retStmt->get_val();
-                // If the return type does not match, check if it can be literal cast
-                if (!utils::is_literal(val)) {
-                    auto [line, column] = val->pos();
-                    throw utils::CompilerError::new_error(program.name, program.path, "Kiểu trả về khác kiểu trả về của hàm", line, column);
-                }
-                if (!utils::can_cast_literal(retStmt->get_val(), return_type)) {
-                    auto [line, column] = val->pos();
-                    throw utils::CompilerError::new_error(program.name, program.path, "Kiểu trả về khác kiểu trả về của hàm", line, column);
-                }
-
-                // Cast the expression to the function's return type
-                try {
-                    utils::cast_literal(val, return_type);
-                } catch ([[maybe_unused]] std::exception& e) {
-                    throw;
-                }
-            }
-        } else if (retStmt->get_val()) {
-            // If the function return type is "rỗng", but a value is returned
-            auto [line, column] = retStmt->pos();
-            throw utils::CompilerError::new_error(program.name, program.path, "Hàm thủ tục không thể trả về một giá trị", line, column);
+    } else if (auto varDeclStmt = dynamic_cast<ast::VarDeclStmt*>(stmt)) {
+        try {
+            this->analyze_vardeclstmt(parentTable, varDeclStmt);
+        } catch (...) {
+            throw;
+        }
+    } else if (auto varAssignStmt = dynamic_cast<ast::VarAssignStmt*>(stmt)) {
+        try {
+            this->analyze_varassignstmt(parentTable, varAssignStmt);
+        } catch (...) {
+            throw;
         }
     } else {
         // Handle other statement types
@@ -124,27 +112,161 @@ void bao::Analyzer::analyze_statement(sema::SymbolTable &parentTable, ast::StmtN
     }
 }
 
-void bao::Analyzer::analyze_expression(sema::SymbolTable &parentTable, ast::ExprNode* expr) {
+void 
+bao::Analyzer :: analyze_retstmt(
+    bao::sema::SymbolTable& parentTable, 
+    bao::ast::RetStmt* stmt, 
+    Type* return_type
+) {
+    // Analyze return statement
+    if (stmt->get_val()) {
+        try {
+            analyze_expression(parentTable, stmt->get_val());
+        } catch (...) {
+            throw;
+        }
+    }
+    // Check if the return type matches the function's return type
+    if (return_type->get_name() != "rỗng") {
+        // Check if the return type matches the function's return type
+        if (!stmt->get_val()) return;
+        try {
+            this->analyze_type(stmt->get_val(), return_type);
+        } catch (...) {
+            auto [line, column] = stmt->get_val()->pos();
+            throw utils::CompilerError::new_error(this->program.name, this->program.path, 
+                "Kiểu dữ liệu khác kiểu trả về của hàm", 
+                line, column);
+        }
+    } else if (stmt->get_val()) {
+        // If the function return type is "rỗng", but a value is returned
+        auto [line, column] = stmt->pos();
+        throw utils::CompilerError::new_error(program.name, program.path, "Hàm thủ tục không thể trả về một giá trị", line, column);
+    }
+}
+
+void
+bao::Analyzer :: analyze_vardeclstmt(
+    bao::sema::SymbolTable& parentTable, 
+    bao::ast::VarDeclStmt* stmt
+) {
+    if (!parentTable.insert(
+        stmt->get_var().get_name(), 
+        {
+            sema::SymbolType::Variable,
+            stmt->get_var().get_type(),
+            stmt->get_var().is_const()
+        }
+    )) {
+        auto [line, column] = stmt->get_var().pos();
+        throw utils::CompilerError::new_error(
+            this->program.name, this->program.path, 
+            "Biến '" + stmt->get_var().get_name() + "' đã được khai báo rồi",
+            line, column);
+    }
+    if (!stmt->get_val()) return;
+    try {
+        this->analyze_expression(parentTable, stmt->get_val());
+    } catch (...) {
+        throw;
+    }
+    try {
+        this->analyze_type(stmt->get_val(), stmt->get_var().get_type());
+    } catch (...) {
+        auto [line, column] = stmt->get_val()->pos();
+        throw utils::CompilerError::new_error(this->program.name, this->program.path, 
+            std::format(
+                "Kiểu dữ liệu ({}) khác kiểu dữ liệu của biến ({})",
+                stmt->get_val()->get_type()->get_name(),
+                stmt->get_var().get_type()->get_name()
+            ), 
+            line, column);
+    }
+}
+
+void
+bao::Analyzer :: analyze_varassignstmt(
+    sema::SymbolTable& parentTable, 
+    ast::VarAssignStmt* stmt
+) {
+    auto symbol = 
+        parentTable.lookup(
+            stmt->get_var().get_name()
+        );
+    if (!symbol || symbol->type != sema::SymbolType::Variable) {
+        auto [line, column] = stmt->pos();
+        throw utils::CompilerError::new_error(
+            this->program.name, this->program.path,
+            "Biến không xác định, chưa khai báo hoặc trùng tên với hàm", 
+            line, column
+        );
+    }
+
+    // Resolve type
+    stmt->get_var().set_type(symbol->datatype->clone());
+
+    // Constants cannot be reassigned
+    if (symbol->isConst) {
+        auto [line, column] = stmt->pos();
+        throw utils::CompilerError::new_error(
+            this->program.name, this->program.path,
+            "Hằng số không thể gán lại giá trị", 
+            line, column
+        );
+    }
+
+    try {
+        this->analyze_expression(parentTable, stmt->get_val());
+    } catch (...) {
+        throw;
+    }
+    try {
+        this->analyze_type(stmt->get_val(), symbol->datatype);
+    } catch (...) {
+        auto [line, column] = stmt->get_val()->pos();
+        throw utils::CompilerError::new_error(this->program.name, this->program.path, 
+            std::format(
+                "Kiểu dữ liệu ({}) khác kiểu dữ liệu của biến ({})",
+                stmt->get_val()->get_type()->get_name(),
+                symbol->datatype->get_name()
+            ), 
+            line, column);
+    }
+}
+
+void 
+bao::Analyzer :: analyze_expression(
+    sema::SymbolTable &parentTable, 
+    ast::ExprNode* expr
+) {
     if (dynamic_cast<ast::NumLitExpr*>(expr)) {
         // Analyze number literal expression
         // No action needed for number literals
+    } else if (auto var = dynamic_cast<ast::VarExpr*>(expr)) {
+        auto symbol = parentTable.lookup(var->get_name());
+        if (!symbol || symbol->type != sema::SymbolType::Variable) {
+            auto [line, column] = var->pos();
+            throw utils::CompilerError::new_error(
+                this->program.name, this->program.path,
+                "Biến không xác định, chưa khai báo hoặc trùng tên với hàm", 
+                line, column
+            );
+        }
+        var->set_type(symbol->datatype->clone());
     } else if (auto bin_expr = dynamic_cast<ast::BinExpr*>(expr)) {
         auto left = bin_expr->get_left();
         auto right = bin_expr->get_right();
 
         // Resolve left and right's type if they're binary expressions (Unknown by default)
         std::vector<std::exception_ptr> exceptions;
+
         try {
-            if (dynamic_cast<ast::BinExpr*>(left)) {
-                analyze_expression(parentTable, left);
-            }
+            analyze_expression(parentTable, left);
         } catch (...) {
             exceptions.push_back(std::current_exception());
         }
         try {
-            if (dynamic_cast<ast::BinExpr*>(right)) {
-                analyze_expression(parentTable, right);
-            }
+            analyze_expression(parentTable, right);
         } catch (...) {
             exceptions.push_back(std::current_exception());
         }
@@ -159,6 +281,8 @@ void bao::Analyzer::analyze_expression(sema::SymbolTable &parentTable, ast::Expr
         }
 
         // Check if can literal cast
+        auto [lline, lcolumn] = left->pos();
+        auto [rline, rcolumn] = right->pos();
         if (!utils::is_literal(left) && !utils::is_literal(right)) {
             auto [line, column] = left->pos();
             throw utils::CompilerError::new_error(
@@ -167,7 +291,7 @@ void bao::Analyzer::analyze_expression(sema::SymbolTable &parentTable, ast::Expr
                                     left->get_type()->get_name(),
                                     bin_expr->get_op(),
                                     right->get_type()->get_name()),
-                line, column);
+                lline, lcolumn, rcolumn - lcolumn);
         }
 
         // Left is a number literal
@@ -199,8 +323,6 @@ void bao::Analyzer::analyze_expression(sema::SymbolTable &parentTable, ast::Expr
         }
         
         // Fallback
-        auto [lline, lcolumn] = left->pos();
-        auto [rline, rcolumn] = right->pos();
         throw utils::CompilerError::new_error(
             program.name, 
             program.path, 
@@ -212,5 +334,33 @@ void bao::Analyzer::analyze_expression(sema::SymbolTable &parentTable, ast::Expr
     } else {
         // Handle other expression types
         throw std::runtime_error("Kiểu biểu thức không hỗ trợ");
+    }
+}
+
+void 
+bao::Analyzer :: analyze_type(
+    ast::ExprNode* val, 
+    Type* type
+) {
+    // TODO: For now check only the type name, check it better later
+    if (val->get_type()->get_name() == type->get_name()) {
+        return;
+    }
+
+    // If the type does not match, check if it can be literal cast
+    if (!utils::is_literal(val)) {
+        auto [line, column] = val->pos();
+        throw utils::CompilerError::new_error(program.name, program.path, "Lỗi nội bộ: Không thể chuyển kiểu", line, column);
+    }
+    if (!utils::can_cast_literal(val, type)) {
+        auto [line, column] = val->pos();
+        throw utils::CompilerError::new_error(program.name, program.path, "Lỗi nội bộ: Không thể chuyển kiểu", line, column);
+    }
+
+    // Cast the expression to the type
+    try {
+        utils::cast_literal(val, type);
+    } catch ([[maybe_unused]] std::exception& e) {
+        throw;
     }
 }

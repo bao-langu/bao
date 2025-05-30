@@ -84,11 +84,45 @@ void bao::utils::ast::print_statement(bao::ast::StmtNode* stmt, const string &pa
     if (const auto ret_stmt = dynamic_cast<bao::ast::RetStmt*>(stmt)) {
         if (ret_stmt->get_val()) {
             ast::print_expression(ret_stmt->get_val(), padding);
+            std::cout << std::endl;
         }
+    } else if (const auto vardecl_stmt = dynamic_cast<bao::ast::VarDeclStmt*>(stmt)) {
+        auto& var = vardecl_stmt->get_var();
+        auto type = var.get_type();
+        auto [var_line, var_column] = var.pos();
+        std::string var_name = "Biến";
+        if (var.is_const()) {
+            var_name = "Hằng";
+        }
+        cout << padding << " $ " << var_name << ": " << std::format(
+                "{} ({}: {}) (Dòng {}, Cột {})",
+                vardecl_stmt->get_var().get_name(),
+                utils::type_to_string(type), type->get_name(),
+                var_line, var_column
+            );
+        if (vardecl_stmt->get_val()) {
+            cout << " := " << endl;
+            ast::print_expression(vardecl_stmt->get_val(), padding + "   ");
+        }
+        std::cout << std::endl;
+    } else if (const auto varassign_stmt = dynamic_cast<bao::ast::VarAssignStmt*>(stmt)) {
+        auto [line, column] = varassign_stmt->pos();
+        cout 
+            << padding << " $ "
+            << std::format(
+                "{} ({}: {}) (Dòng {}, Cột {}) :=\n",
+                varassign_stmt->get_var().get_name(),
+                utils::type_to_string(varassign_stmt->get_var().get_type()),
+                varassign_stmt->get_var().get_type()->get_name(),
+                line, column
+            );
+        ast::print_expression(varassign_stmt->get_val(), padding + "   ");
+        std::cout << std::endl;
     } else {
         cout << padding + " ? Biểu thức không xác định";
+        std::cout << std::endl;
     }
-    std::cout << std::endl;
+    std::cout << padding << std::endl;
 }
 
 void bao::utils::ast::print_expression(bao::ast::ExprNode* expr, const string &padding) {
@@ -97,12 +131,20 @@ void bao::utils::ast::print_expression(bao::ast::ExprNode* expr, const string &p
     if (const auto num_expr = dynamic_cast<bao::ast::NumLitExpr*>(expr)) {
         const auto message = std::format(
             " $ Biểu thức số: {} ({}: {}) (Dòng {}, Cột {})",
-            num_expr->get_val(), type, num_expr->get_type()->get_name(), line, column);
+            num_expr->get_val(), type, num_expr->get_type()->get_name(), line, column
+        );
+        cout << pad_lines(message, padding);
+    } else if (const auto var_expr = dynamic_cast<bao::ast::VarExpr*>(expr)) {
+        const auto message = std::format(
+            " $ Biểu thức biến: {} ({}: {}) (Dòng {}, Cột {})",
+            var_expr->get_name(), type, var_expr->get_type()->get_name(), line, column
+        );
         cout << pad_lines(message, padding);
     } else if (const auto bin_expr = dynamic_cast<bao::ast::BinExpr*>(expr)){
         const auto message = std::format(
             " $ Biểu thức nhị phân ({}: {}) (Dòng {}, Cột {}):",
-            type, bin_expr->get_type()->get_name(), line, column);
+            type, bin_expr->get_type()->get_name(), line, column
+        );
         std::cout << pad_lines(message, padding) << std::endl;
         print_expression(bin_expr->get_left(), padding + "   ");
         std::cout << std::endl;
@@ -146,11 +188,19 @@ void bao::utils::mir::print_block(const bao::mir::BasicBlock &block, const strin
 
 void bao::utils::mir::print_instruction(const bao::mir::Instruction* inst, const string &padding) {
     cout << padding;    
-    if (const auto assign = dynamic_cast<const bao::mir::AssignInst*>(inst)) {
-        cout << "assigninst: ";
-        print_value(assign->dst, "");
-        cout << " = ";
-        print_value(assign->src, "");
+    if (const auto alloc = dynamic_cast<const bao::mir::AllocInst*>(inst)) {
+        cout << "allocinst: ";
+        print_value(alloc->dst, "");
+    } else if (const auto store = dynamic_cast<const bao::mir::StoreInst*>(inst)) {
+        cout << "storeinst: ";
+        print_value(store->src, "");
+        cout << " -> ";
+        print_value(store->dst, "");
+    } else if (const auto load = dynamic_cast<const bao::mir::LoadInst*>(inst)) {
+        cout << "loadinst: ";
+        print_value(load->dst, "");
+        cout << " <- ";
+        print_value(load->src, "");
     } else if (const auto call = dynamic_cast<const bao::mir::CallInst*>(inst)) {
         cout << "callinst: ";
         cout << "Tên hàm: " << call->function_name << endl;
@@ -227,10 +277,28 @@ void bao::utils::mir::print_value(const bao::mir::Value &value, const string &pa
     cout << padding;
     switch (value.kind) {
         case bao::mir::ValueKind::Constant:
-            cout << "const(" << type_to_string(value.type.get()) << ": " << value.name << ")";
+            cout << std::format(
+                "const({}<{}> {})",
+                type_to_string(value.type.get()),
+                value.type->get_name(),
+                value.name
+            );
             break;
         case bao::mir::ValueKind::Temporary:
-            cout << "temp(" << type_to_string(value.type.get()) << ": " << value.name << ")";
+            cout << std::format(
+                "temp({}<{}> {})",
+                type_to_string(value.type.get()),
+                value.type->get_name(),
+                value.name
+            );
+            break;
+        case bao::mir::ValueKind::Variable:
+            cout << std::format(
+                "var({}<{}> {})",
+                type_to_string(value.type.get()),
+                value.type->get_name(),
+                value.name
+            );
             break;
         default:
             cout << "Giá trị không xác định";

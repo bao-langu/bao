@@ -11,7 +11,7 @@ using std::string;
 
 namespace bao {
     inline std::unordered_set<string> operators = {
-        "+", "-", "*", "/", "=", "!=", ":=", ">", "<", ">=", "<=", "..", "->"
+        "+", "-", "*", "/", "=", "!=", ":=", ">", "<", ">=", "<=", "..", "->", ":"
     };
     inline std::unordered_set<string> keywords = {
         "hàm", "thủ tục", "nếu", "thì", "không thì", "và", "hoặc", "kết thúc", "trả về"

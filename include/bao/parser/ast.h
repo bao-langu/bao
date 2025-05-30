@@ -95,17 +95,35 @@ namespace bao::ast {
     // --- Program's variables ---
     class VarNode final : public ASTNode {
         std::unique_ptr<Type> type;
+        bool isConst;
     public:
+        VarNode(VarNode& cpy): ASTNode(cpy.name, cpy.line, cpy.column) {
+            this->type = cpy.type->clone();
+            this->isConst = cpy.isConst;
+        }
+        VarNode operator=(const VarNode& cpy) {
+            return VarNode(cpy.name, cpy.type->clone(), cpy.isConst, cpy.line, cpy.column);
+        }
         VarNode(
             string name,
+            std::unique_ptr<Type>&& type,
+            bool isConst,
             const int line,
-            const int column,
-            std::unique_ptr<Type>&& type
-        ):  ASTNode(std::move(name), line, column),
-            type(std::move(type)) {}
+            const int column
+        ):  ASTNode(name, line, column),
+            type(std::move(type)),
+            isConst(isConst) {}
 
         [[nodiscard]] Type* get_type() const {
             return type.get();
+        }
+
+        void set_type(std::unique_ptr<Type>&& type) {
+            this->type = std::move(type);
+        }
+
+        [[nodiscard]] bool is_const() const {
+            return isConst;
         }
     };
 
@@ -149,20 +167,39 @@ namespace bao::ast {
     class VarDeclStmt final : public StmtNode {
         VarNode var;
         std::unique_ptr<ExprNode> val;
-        public:
+    public:
         explicit VarDeclStmt(
-            VarNode  var,
+            VarNode var,
             std::unique_ptr<ExprNode>&& val,
             const int line, const int column
-            ):
-            StmtNode("vardeclstmt", line, column),
-            var(std::move(var)), val(std::move(val)) {}
+        ) : StmtNode("vardeclstmt", line, column),
+            var(var), val(std::move(val)) {}
 
-        [[nodiscard]] const VarNode &get_var() const {
-            return var;
+        [[nodiscard]] VarNode& get_var() {
+            return this->var;
         }
 
-        [[nodiscard]] const ExprNode *get_val() const {
+        [[nodiscard]] ExprNode* get_val() const {
+            return val.get();
+        }
+    };
+
+    class VarAssignStmt final : public StmtNode {
+        VarNode var;
+        std::unique_ptr<ExprNode> val;
+    public:
+        explicit VarAssignStmt(
+            VarNode var,
+            std::unique_ptr<ExprNode>&& val,
+            const int line, const int column
+        ) : StmtNode("varassignstmt", line, column),
+            var(var), val(std::move(val)) {}
+
+        [[nodiscard]] VarNode& get_var() {
+            return this->var;
+        }
+
+        [[nodiscard]] ExprNode* get_val() const {
             return val.get();
         }
     };
@@ -191,16 +228,31 @@ namespace bao::ast {
         string value;
     public:
         explicit NumLitExpr(
-            string value,
+            std::string value,
             std::unique_ptr<Type> &&type,
             const int line,
             const int column
-            ):
-            ExprNode("numlitexpr", std::move(type), line, column),
+        ):  ExprNode("numlitexpr", std::move(type), line, column),
             value(std::move(value)) {}
 
-        [[nodiscard]] string get_val() const {
+        [[nodiscard]] std::string get_val() const {
             return value;
+        }
+    };
+
+    class VarExpr final : public ExprNode {
+        std::string name;
+    public:
+        explicit VarExpr(
+            string name,
+            std::unique_ptr<Type>&& type,
+            const int line,
+            const int column
+        ):  ExprNode("varexpr", std::move(type), line, column),
+            name(std::move(name)) {}
+
+        [[nodiscard]] std::string get_name() const {
+            return name;
         }
     };
 

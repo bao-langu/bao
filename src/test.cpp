@@ -39,15 +39,19 @@ using icu::UnicodeString;
 using icu::StringCharacterIterator;
 
 // --- Test functions ---
-void linuxStartTest();
+
 void compilerTest();
-void llvmTest();
 void mirTest();
 void semanticsTest();
 void parserTest();
 void lexerTest();
 void readerTest();
-// int icuTest();
+/*
+* Test from bottom up
+*/
+
+void linuxStartTest();
+void llvmTest();
 
 // Main test function
 int test(int argc, char* argv[]) {
@@ -58,7 +62,6 @@ int test(int argc, char* argv[]) {
 void linuxStartTest() {
     bao::utils::generate_start();
 }
-
 
 void compilerTest() {
     try {
