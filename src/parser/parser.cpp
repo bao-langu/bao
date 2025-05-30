@@ -408,8 +408,14 @@ bao::Parser :: parse_varassignstmt() -> std::unique_ptr<bao::ast::VarAssignStmt>
     } catch (...) {
         throw;
     }
+    auto var = ast::VarNode(
+            var_name,
+            std::make_unique<UnknownType>(),
+            false,
+            line, column
+        );
     return std::make_unique<ast::VarAssignStmt>(
-        var_name,
+        var,
         std::move(val),
         line, column
     );

@@ -130,6 +130,27 @@ bao::mir::Translator :: translate_statement(
                         )
                     );
             }
+        } else if (const auto varassign_stmt = dynamic_cast<ast::VarAssignStmt*>(stmt)) {
+            Value dst{
+                ValueKind::Variable,
+                varassign_stmt->get_var().get_name(),
+                varassign_stmt->get_var().get_type()->clone()
+            };
+
+            auto src = 
+                this->translate_expression(
+                    func, 
+                    stmt, 
+                    varassign_stmt->get_val()
+                );
+            func.blocks.back()
+                .instructions
+                .push_back(
+                    std::make_unique<StoreInst>(
+                        std::move(src),
+                        dst
+                    )
+                );
         } else {
             // Handle other statement types
             auto [line, column] = stmt->pos();

@@ -191,7 +191,7 @@ bao::Analyzer :: analyze_varassignstmt(
 ) {
     auto symbol = 
         parentTable.lookup(
-            stmt->get_var_name()
+            stmt->get_var().get_name()
         );
     if (!symbol || symbol->type != sema::SymbolType::Variable) {
         auto [line, column] = stmt->pos();
@@ -201,6 +201,9 @@ bao::Analyzer :: analyze_varassignstmt(
             line, column
         );
     }
+
+    // Resolve type
+    stmt->get_var().set_type(symbol->datatype->clone());
 
     // Constants cannot be reassigned
     if (symbol->isConst) {

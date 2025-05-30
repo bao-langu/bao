@@ -51,7 +51,8 @@ namespace bao {
     public:
         explicit UnknownType() : Type("unknown") {}
         std::unique_ptr<Type> clone() const {
-            throw std::runtime_error("Không thể clone kiểu Unknown");
+            return std::make_unique<UnknownType>(*this);
+            // throw std::runtime_error("Không thể clone kiểu Unknown");
         }
     };
 }

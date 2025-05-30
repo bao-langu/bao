@@ -110,8 +110,10 @@ void bao::utils::ast::print_statement(bao::ast::StmtNode* stmt, const string &pa
         cout 
             << padding << " $ "
             << std::format(
-                "{} (Dòng {}, Cột {}) :=\n",
-                varassign_stmt->get_var_name(),
+                "{} ({}: {}) (Dòng {}, Cột {}) :=\n",
+                varassign_stmt->get_var().get_name(),
+                utils::type_to_string(varassign_stmt->get_var().get_type()),
+                varassign_stmt->get_var().get_type()->get_name(),
                 line, column
             );
         ast::print_expression(varassign_stmt->get_val(), padding + "   ");

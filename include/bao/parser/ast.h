@@ -118,6 +118,10 @@ namespace bao::ast {
             return type.get();
         }
 
+        void set_type(std::unique_ptr<Type>&& type) {
+            this->type = std::move(type);
+        }
+
         [[nodiscard]] bool is_const() const {
             return isConst;
         }
@@ -171,8 +175,8 @@ namespace bao::ast {
         ) : StmtNode("vardeclstmt", line, column),
             var(var), val(std::move(val)) {}
 
-        [[nodiscard]] const VarNode& get_var() const {
-            return var;
+        [[nodiscard]] VarNode& get_var() {
+            return this->var;
         }
 
         [[nodiscard]] ExprNode* get_val() const {
@@ -181,18 +185,18 @@ namespace bao::ast {
     };
 
     class VarAssignStmt final : public StmtNode {
-        std::string var_name;
+        VarNode var;
         std::unique_ptr<ExprNode> val;
     public:
         explicit VarAssignStmt(
-            std::string var_name,
+            VarNode var,
             std::unique_ptr<ExprNode>&& val,
             const int line, const int column
         ) : StmtNode("varassignstmt", line, column),
-            var_name(var_name), val(std::move(val)) {}
+            var(var), val(std::move(val)) {}
 
-        [[nodiscard]] std::string get_var_name() const {
-            return var_name;
+        [[nodiscard]] VarNode& get_var() {
+            return this->var;
         }
 
         [[nodiscard]] ExprNode* get_val() const {
