@@ -8,11 +8,14 @@
 #include <bao/sema/analyzer.h>
 #include <exception>
 
-bao::Analyzer::Analyzer(ast::Program &&program) : program(std::move(program)) {
+bao::Analyzer :: Analyzer(
+    ast::Program &&program
+) : program(std::move(program)) {
     this->symbolTable = sema::SymbolTable();
 }
 
-bao::ast::Program bao::Analyzer::analyze_program() {
+auto
+bao::Analyzer :: analyze_program() -> bao::ast::Program {
     // Forward declaration of functions
     for (auto& func : program.funcs) {
         // Insert the function into the symbol table
@@ -42,7 +45,10 @@ bao::ast::Program bao::Analyzer::analyze_program() {
     return std::move(program);
 }
 
-void bao::Analyzer::analyze_function(const ast::FuncNode &func) {
+void 
+bao::Analyzer :: analyze_function(
+    const ast::FuncNode &func
+) {
     sema::SymbolTable localTable(&this->symbolTable);
     // Insert param into the local symbol table
     for (auto& param : func.get_params()) {
@@ -64,27 +70,39 @@ void bao::Analyzer::analyze_function(const ast::FuncNode &func) {
 
     if (!exceptions.empty()) {
         auto [line, column] = func.pos();
-        const std::string errorMessage = std::format("\033[34m@{}\033[0m -> {} (Dòng {}, Cột {}):\n{}",
-                                                func.get_name(),
-                                                func.get_return_type()->get_name(),
-                                                line,
-                                                column,
-                                                utils::pad_lines(utils::ErrorList(exceptions).what(), " | "));
+        const std::string errorMessage = 
+            std::format("\033[34m@{}\033[0m -> {} (Dòng {}, Cột {}):\n{}",
+            func.get_name(),
+            func.get_return_type()->get_name(),
+            line,
+            column,
+            utils::pad_lines(utils::ErrorList(exceptions).what(), " | "));
         throw std::runtime_error(errorMessage);
     }
 }
 
-void bao::Analyzer::analyze_statement(sema::SymbolTable &parentTable, ast::StmtNode* stmt, Type* return_type) {
+void 
+bao::Analyzer :: analyze_statement(
+    sema::SymbolTable &parentTable, 
+    ast::StmtNode* stmt, 
+    Type* return_type
+) {
     if (auto retStmt = dynamic_cast<ast::RetStmt*>(stmt)) {
         try {
             this->analyze_retstmt(parentTable, retStmt, return_type);
-        } catch(...) {
+        } catch (...) {
             throw;
         }
     } else if (auto varDeclStmt = dynamic_cast<ast::VarDeclStmt*>(stmt)) {
         try {
             this->analyze_vardeclstmt(parentTable, varDeclStmt);
-        } catch(...) {
+        } catch (...) {
+            throw;
+        }
+    } else if (auto varAssignStmt = dynamic_cast<ast::VarAssignStmt*>(stmt)) {
+        try {
+            this->analyze_varassignstmt(parentTable, varAssignStmt);
+        } catch (...) {
             throw;
         }
     } else {
@@ -94,7 +112,12 @@ void bao::Analyzer::analyze_statement(sema::SymbolTable &parentTable, ast::StmtN
     }
 }
 
-void bao::Analyzer::analyze_retstmt(bao::sema::SymbolTable& parentTable, bao::ast::RetStmt* stmt, Type* return_type) {
+void 
+bao::Analyzer :: analyze_retstmt(
+    bao::sema::SymbolTable& parentTable, 
+    bao::ast::RetStmt* stmt, 
+    Type* return_type
+) {
     // Analyze return statement
     if (stmt->get_val()) {
         try {
@@ -122,12 +145,17 @@ void bao::Analyzer::analyze_retstmt(bao::sema::SymbolTable& parentTable, bao::as
     }
 }
 
-void bao::Analyzer::analyze_vardeclstmt(bao::sema::SymbolTable& parentTable, bao::ast::VarDeclStmt* stmt) {
+void
+bao::Analyzer :: analyze_vardeclstmt(
+    bao::sema::SymbolTable& parentTable, 
+    bao::ast::VarDeclStmt* stmt
+) {
     if (!parentTable.insert(
         stmt->get_var().get_name(), 
         {
             sema::SymbolType::Variable,
-            stmt->get_var().get_type()  
+            stmt->get_var().get_type(),
+            stmt->get_var().is_const()
         }
     )) {
         auto [line, column] = stmt->get_var().pos();
@@ -147,12 +175,67 @@ void bao::Analyzer::analyze_vardeclstmt(bao::sema::SymbolTable& parentTable, bao
     } catch (...) {
         auto [line, column] = stmt->get_val()->pos();
         throw utils::CompilerError::new_error(this->program.name, this->program.path, 
-            "Kiểu dữ liệu khác kiểu dữ liệu của biến", 
+            std::format(
+                "Kiểu dữ liệu ({}) khác kiểu dữ liệu của biến ({})",
+                stmt->get_val()->get_type()->get_name(),
+                stmt->get_var().get_type()->get_name()
+            ), 
             line, column);
     }
 }
 
-void bao::Analyzer::analyze_expression(sema::SymbolTable &parentTable, ast::ExprNode* expr) {
+void
+bao::Analyzer :: analyze_varassignstmt(
+    sema::SymbolTable& parentTable, 
+    ast::VarAssignStmt* stmt
+) {
+    auto symbol = 
+        parentTable.lookup(
+            stmt->get_var_name()
+        );
+    if (!symbol || symbol->type != sema::SymbolType::Variable) {
+        auto [line, column] = stmt->pos();
+        throw utils::CompilerError::new_error(
+            this->program.name, this->program.path,
+            "Biến không xác định, chưa khai báo hoặc trùng tên với hàm", 
+            line, column
+        );
+    }
+
+    // Constants cannot be reassigned
+    if (symbol->isConst) {
+        auto [line, column] = stmt->pos();
+        throw utils::CompilerError::new_error(
+            this->program.name, this->program.path,
+            "Hằng số không thể gán lại giá trị", 
+            line, column
+        );
+    }
+
+    try {
+        this->analyze_expression(parentTable, stmt->get_val());
+    } catch (...) {
+        throw;
+    }
+    try {
+        this->analyze_type(stmt->get_val(), symbol->datatype);
+    } catch (...) {
+        auto [line, column] = stmt->get_val()->pos();
+        throw utils::CompilerError::new_error(this->program.name, this->program.path, 
+            std::format(
+                "Kiểu dữ liệu ({}) khác kiểu dữ liệu của biến ({})",
+                stmt->get_val()->get_type()->get_name(),
+                symbol->datatype->get_name()
+            ), 
+            line, column);
+    }
+}
+
+void 
+bao::Analyzer :: analyze_expression(
+    sema::SymbolTable &parentTable, 
+    ast::ExprNode* expr
+) {
     if (dynamic_cast<ast::NumLitExpr*>(expr)) {
         // Analyze number literal expression
         // No action needed for number literals
@@ -163,7 +246,8 @@ void bao::Analyzer::analyze_expression(sema::SymbolTable &parentTable, ast::Expr
             throw utils::CompilerError::new_error(
                 this->program.name, this->program.path,
                 "Biến không xác định, chưa khai báo hoặc trùng tên với hàm", 
-                line, column);
+                line, column
+            );
         }
         var->set_type(symbol->datatype->clone());
     } else if (auto bin_expr = dynamic_cast<ast::BinExpr*>(expr)) {
@@ -250,7 +334,11 @@ void bao::Analyzer::analyze_expression(sema::SymbolTable &parentTable, ast::Expr
     }
 }
 
-void bao::Analyzer::analyze_type(ast::ExprNode* val, Type* type) {
+void 
+bao::Analyzer :: analyze_type(
+    ast::ExprNode* val, 
+    Type* type
+) {
     // TODO: For now check only the type name, check it better later
     if (val->get_type()->get_name() == type->get_name()) {
         return;

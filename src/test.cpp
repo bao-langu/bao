@@ -55,7 +55,7 @@ void llvmTest();
 
 // Main test function
 int test(int argc, char* argv[]) {
-    parserTest();
+    semanticsTest();
     return 0;
 }
 

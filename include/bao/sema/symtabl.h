@@ -18,6 +18,7 @@ namespace bao::sema {
     struct SymbolInfo {
         SymbolType type;
         Type* datatype;
+        bool isConst;
     };
 
     class SymbolTable {
