@@ -6,7 +6,7 @@
 #define SYMTABL_H
 #include <iostream>
 #include <unordered_map>
-#include <bao/types.h>
+#include <bao/common/types.h>
 
 namespace bao::sema {
     enum class SymbolType {

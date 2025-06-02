@@ -9,7 +9,7 @@
 #include <string>
 #include <utility>
 
-#include "lexer/maps.h"
+#include <bao/lexer/maps.h>
 
 using std::string;
 

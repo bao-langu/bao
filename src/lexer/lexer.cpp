@@ -7,7 +7,7 @@
 #include <bao/lexer/lexer.h>
 #include <bao/lexer/sets.h>
 #include <unicode/uchar.h>
-#include <bao/utils.h>
+#include <bao/common/utils.h>
 #include <bao/lexer/maps.h>
 
 #define U_SENTINEL 0xFFFF

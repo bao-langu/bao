@@ -1,8 +1,8 @@
 //
 // Created by doqin on 13/05/2025.
 //
-#include <bao/types.h>
-#include <bao/utils.h>
+#include <bao/common/types.h>
+#include <bao/common/utils.h>
 #include <iostream>
 #include <bao/lexer/maps.h>
 #include <cstring>
@@ -61,7 +61,7 @@ bao::utils :: print_token(
 
 void 
 bao::utils::ast :: print_program(
-    const bao::ast::Program &program
+    const bao::ast::Module &program
 ) {
     cout << "Nội dung chương trình:" << endl;
     cout << "   Tên: " << program.name << endl;

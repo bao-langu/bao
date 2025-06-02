@@ -1,4 +1,4 @@
-#include <bao/utils.h>
+#include <bao/common/utils.h>
 #include <bao/mir/mir.h>
 #include <bao/codegen/generator.h>
 #include <exception>

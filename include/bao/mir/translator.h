@@ -10,9 +10,9 @@
 namespace bao::mir {
     class Translator {
         Module module;
-        ast::Program program;
+        ast::Module program;
     public:
-        explicit Translator(ast::Program&& program);
+        explicit Translator(ast::Module&& program);
         Module translate();
     private:
         Function translate_function(const ast::FuncNode& func);

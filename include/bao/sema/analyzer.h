@@ -10,10 +10,10 @@
 namespace bao {
     class Analyzer {
         sema::SymbolTable symbolTable;
-        ast::Program program;
+        ast::Module program;
     public:
-        explicit Analyzer(ast::Program&& program);
-        ast::Program analyze_program();
+        explicit Analyzer(ast::Module&& program);
+        ast::Module analyze_program();
     private:
         void analyze_function(const ast::FuncNode& func);
 

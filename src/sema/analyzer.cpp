@@ -2,20 +2,20 @@
 // Created by đỗ quyên on 17/5/25.
 //
 
-#include "bao/parser/ast.h"
-#include "bao/sema/symtabl.h"
-#include "bao/utils.h"
+#include <bao/parser/ast.h>
+#include <bao/sema/symtabl.h>
+#include <bao/common/utils.h>
 #include <bao/sema/analyzer.h>
 #include <exception>
 
 bao::Analyzer :: Analyzer(
-    ast::Program &&program
+    ast::Module &&program
 ) : program(std::move(program)) {
     this->symbolTable = sema::SymbolTable();
 }
 
 auto
-bao::Analyzer :: analyze_program() -> bao::ast::Program {
+bao::Analyzer :: analyze_program() -> bao::ast::Module {
     // Forward declaration of functions
     for (auto& func : program.funcs) {
         // Insert the function into the symbol table

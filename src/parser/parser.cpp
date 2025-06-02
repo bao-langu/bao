@@ -3,8 +3,8 @@
 //
 #include "bao/lexer/token.h"
 #include <bao/parser/parser.h>
-#include <bao/utils.h>
-#include <bao/types.h>
+#include <bao/common/utils.h>
+#include <bao/common/types.h>
 #include <bao/parser/ast.h>
 #include <memory>
 #include <unordered_map>
@@ -33,7 +33,7 @@ bao::Parser :: Parser(const string &filename, const string &directory, const vec
 }
 
 auto
-bao::Parser :: parse_program() -> bao::ast::Program {
+bao::Parser :: parse_program() -> bao::ast::Module {
     vector<ast::FuncNode> functions;
     vector<exception_ptr> exceptions;
     while (this->current().type != TokenType::EndOfFile) {
@@ -83,7 +83,7 @@ bao::Parser :: parse_program() -> bao::ast::Program {
     if (!exceptions.empty()) {
         throw utils::ErrorList(exceptions);
     }
-    return ast::Program(
+    return ast::Module(
         this->filename,
         this->directory,
         std::move(functions));

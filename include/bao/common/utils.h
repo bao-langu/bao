@@ -39,7 +39,7 @@ namespace bao {
 namespace bao::ast {
     class NumLitExpr;
     class StmtNode;
-    struct Program;
+    struct Module;
     class FuncNode;
     class ExprNode;
 }
@@ -79,7 +79,7 @@ namespace bao::utils {
          * Helper function to print the program
          * @param program The program to print
          */
-        void print_program(const bao::ast::Program& program);
+        void print_program(const bao::ast::Module& program);
 
         void print_function(const bao::ast::FuncNode& func, const string &padding);
 

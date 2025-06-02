@@ -4,8 +4,8 @@
 
 #ifndef AST_H
 #define AST_H
-#include <bao/types.h>
-#include <bao/utils.h>
+#include <bao/common/types.h>
+#include <bao/common/utils.h>
 #include <memory>
 #include <string>
 #include <utility>
@@ -290,11 +290,11 @@ namespace bao::ast {
     };
 
     // --- Final parsed program ---
-    struct Program {
+    struct Module {
         string name;
         string path;
         vector<FuncNode> funcs;
-        explicit Program(
+        explicit Module(
             string name, string path,
             vector<FuncNode>&& funcs
         ):  

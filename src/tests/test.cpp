@@ -2,7 +2,7 @@
 // Created by doqin on 13/05/2025.
 //
 #include <bao/codegen/generator.h>
-#include <bao/test.h>
+#include <bao/tests/test.h>
 
 // --- Included libraries ---
 #include <iostream>
@@ -16,7 +16,7 @@
 #include <unicode/schriter.h>
 
 #include <bao/filereader/reader.h>
-#include <bao/utils.h>
+#include <bao/common/utils.h>
 #include <bao/lexer/lexer.h>
 #include <bao/parser/parser.h>
 #include <bao/sema/analyzer.h>
@@ -80,7 +80,7 @@ void compilerTest() {
 
         cout << "\033[33mĐang phân tích cú pháp...\033[0m" << endl;
         bao::Parser parser("test.bao", "test", tokens);
-        bao::ast::Program program = std::move(parser.parse_program());
+        bao::ast::Module program = std::move(parser.parse_program());
         cout << "\033[32mPhân tích cú pháp thành công!\033[0m" << endl;
         bao::utils::ast::print_program(program);
 
@@ -223,7 +223,7 @@ void mirTest() {
         }
         cout << "\033[33mĐang phân tích cú pháp...\033[0m" << endl;
         bao::Parser parser("test.bao", "test", tokens);
-        bao::ast::Program program = std::move(parser.parse_program());
+        bao::ast::Module program = std::move(parser.parse_program());
         cout << "\033[32mPhân tích cú pháp thành công!\033[0m" << endl;
         bao::utils::ast::print_program(program);
         cout << "\033[33mĐang phân tích ngữ nghĩa...\033[0m" << endl;
@@ -257,7 +257,7 @@ void semanticsTest() {
         }
         cout << "Đang phân tích cú pháp..." << endl;
         bao::Parser parser("test.bao", "test", tokens);
-        bao::ast::Program program = std::move(parser.parse_program());
+        bao::ast::Module program = std::move(parser.parse_program());
         cout << "Phân tích cú pháp thành công!" << endl;
         bao::utils::ast::print_program(program);
         cout << "Đang phân tích ngữ nghĩa..." << endl;
@@ -287,7 +287,7 @@ void parserTest() {
         }
         cout << "Đang phân tích cú pháp..." << endl;
         bao::Parser parser("test.bao", "test", tokens);
-        const bao::ast::Program& program = parser.parse_program();
+        const bao::ast::Module& program = parser.parse_program();
         cout << "Phân tích cú pháp thành công!" << endl;
         bao::utils::ast::print_program(program);
     } catch (const exception& e) {

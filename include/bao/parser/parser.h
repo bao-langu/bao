@@ -9,7 +9,7 @@
 #include <vector>
 #include <bao/lexer/token.h>
 #include <bao/parser/ast.h>
-#include <bao/utils.h>
+#include <bao/common/utils.h>
 
 using std::vector;
 
@@ -33,7 +33,7 @@ namespace bao {
             const vector<Token> &tokens
         );
 
-        ast::Program parse_program();
+        ast::Module parse_program();
     private:
         // Highest priority
         ast::FuncNode parse_function();

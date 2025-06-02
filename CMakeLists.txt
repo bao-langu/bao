@@ -8,8 +8,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Add source files
 add_executable(${CMAKE_PROJECT_NAME}
         main.cpp
-        src/test.cpp
-        src/utils.cpp
+        src/tests/test.cpp
+        src/common/utils.cpp
         src/filereader/reader.cpp
         src/lexer/lexer.cpp
         src/parser/parser.cpp

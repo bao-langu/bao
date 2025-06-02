@@ -5,7 +5,7 @@
 #ifndef MIR_H
 #define MIR_H
 #include <string>
-#include <bao/types.h>
+#include <bao/common/types.h>
 #include <sys/types.h>
 #include <vector>
 

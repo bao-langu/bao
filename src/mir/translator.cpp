@@ -1,10 +1,10 @@
 //
 // Created by đỗ quyên on 18/5/25.
 //
-#include "bao/mir/mir.h"
-#include "bao/parser/ast.h"
-#include "bao/types.h"
-#include "bao/utils.h"
+#include <bao/mir/mir.h>
+#include <bao/parser/ast.h>
+#include <bao/common/types.h>
+#include <bao/common/utils.h>
 #include <bao/mir/translator.h>
 #include <exception>
 #include <iostream>
@@ -14,7 +14,7 @@
 // ⚠ Readability over orthodoxy. Fight me, ISO committee.
 
 bao::mir::Translator :: Translator(
-    ast::Program &&program
+    ast::Module &&program
 ) : program(std::move(program)) {
     this->module = Module();
     this->module.name = this->program.name;

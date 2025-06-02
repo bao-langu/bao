@@ -3,7 +3,7 @@
 //
 #include <bao/lexer/maps.h>
 #include <bao/lexer/token.h>
-#include <bao/types.h>
+#include <bao/common/types.h>
 
 namespace bao {
     const std::unordered_map<TokenType, string> token_type_map = {
