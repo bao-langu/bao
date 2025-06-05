@@ -1,7 +1,7 @@
 //
 // Created by doqin on 13/05/2025.
 //
-#include <bao/codegen/generator.h>
+#include <bao/codegen/native/generator.h>
 #include <bao/tests/test.h>
 
 // --- Included libraries ---
@@ -99,7 +99,7 @@ void compilerTest() {
         std::string mod_file = mod.name;
 
         cout << "\033[33mĐang dịch sang LLVM IR...\033[0m" << endl;
-        bao::Generator gen(std::move(mod));
+        bao::native::Generator gen(std::move(mod));
         gen.generate();
         cout << "\033[32mDịch sang LLVM IR thành công!\033[0m" << endl;
         gen.print_source();

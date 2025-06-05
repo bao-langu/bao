@@ -258,7 +258,7 @@ bao::utils::mir :: print_instruction(
             cout << "add_f: ";
             break;
         case bao::mir::BinaryOp::Add_s:
-            cout << "add_c: ";
+            cout << "add_s: ";
             break;
         case bao::mir::BinaryOp::Add_u:
             cout << "add_u: ";
@@ -267,7 +267,7 @@ bao::utils::mir :: print_instruction(
             cout << "sub_f: ";
             break;
         case bao::mir::BinaryOp::Sub_s:
-            cout << "sub_c: ";
+            cout << "sub_s: ";
             break;
         case bao::mir::BinaryOp::Sub_u:
             cout << "sub_u: ";
@@ -276,7 +276,7 @@ bao::utils::mir :: print_instruction(
             cout << "mul_f: ";
             break;
         case bao::mir::BinaryOp::Mul_s:
-            cout << "mul_c: ";
+            cout << "mul_s: ";
             break;
         case bao::mir::BinaryOp::Mul_u:
             cout << "mul_u: ";

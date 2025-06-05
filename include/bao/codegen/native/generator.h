@@ -1,5 +1,5 @@
-#ifndef GENERATOR_H
-#define GENERATOR_H
+#ifndef NATIVE_GENERATOR_H
+#define NATIVE_GENERATOR_H
 
 #include <bao/mir/mir.h>
 #include <bao/parser/ast.h>
@@ -8,7 +8,7 @@
 #include <llvm/IR/IRBuilder.h>
 #include <unordered_map>
 
-namespace bao {
+namespace bao::native {
     class Generator {
         bao::mir::Module mir_module;
         llvm::LLVMContext context;
@@ -29,4 +29,4 @@ namespace bao {
         llvm::Value* get_llvm_value(bao::mir::Value &mir_value);
     };
 }
-#endif // GENERATOR_H
+#endif // NATIVE_GENERATOR_H

@@ -5,4 +5,5 @@
 #ifndef TEST_H
 #define TEST_H
 int test(int argc, char* argv[]);
+int bytecode_test();
 #endif //TEST_H

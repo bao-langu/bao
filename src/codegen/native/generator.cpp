@@ -1,6 +1,6 @@
 #include <bao/common/utils.h>
 #include <bao/mir/mir.h>
-#include <bao/codegen/generator.h>
+#include <bao/codegen/native/generator.h>
 #include <exception>
 #include <stdexcept>
 #include <llvm/Bitcode/BitcodeWriter.h>
@@ -16,14 +16,14 @@
 #include <llvm/IR/Intrinsics.h>
 #include <iostream>
 
-bao::Generator :: Generator(
+bao::native::Generator :: Generator(
     bao::mir::Module&& mir_module
 ) : mir_module(std::move(mir_module)), 
     llvm_module(this->mir_module.name, this->context),
     ir_builder(this->context) {}
 
 void
-bao::Generator :: generate() {
+bao::native::Generator :: generate() {
     std::vector<std::exception_ptr> exceptions;
     for (auto& func : this->mir_module.functions) {
         try {
@@ -38,12 +38,12 @@ bao::Generator :: generate() {
 }
 
 void
-bao::Generator :: print_source() {
+bao::native::Generator :: print_source() {
     this->llvm_module.print(llvm::outs(), nullptr);
 }
 
 auto
-bao::Generator :: create_object(
+bao::native::Generator :: create_object(
     const std::string& filename
 ) -> int {
     llvm::InitializeNativeTarget();
@@ -88,7 +88,7 @@ bao::Generator :: create_object(
 }
 
 void
-bao::Generator :: generate_function(
+bao::native::Generator :: generate_function(
     mir::Function& mir_func
 ) {
     this->current_context = {};
@@ -138,7 +138,7 @@ bao::Generator :: generate_function(
 }
 
 void
-bao::Generator :: generate_block(
+bao::native::Generator :: generate_block(
     llvm::BasicBlock* ir_block, 
     bao::mir::BasicBlock& mir_block
 ) {
@@ -157,7 +157,7 @@ bao::Generator :: generate_block(
 }
 
 void
-bao::Generator :: generate_instruction(
+bao::native::Generator :: generate_instruction(
     bao::mir::Instruction* mir_inst
 ) {
     try {
@@ -398,7 +398,7 @@ bao::Generator :: generate_instruction(
 }
 
 auto
-bao::Generator :: get_llvm_value(
+bao::native::Generator :: get_llvm_value(
     bao::mir::Value &mir_value
 ) -> llvm::Value* {
     try {

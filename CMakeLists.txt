@@ -6,9 +6,10 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Add source files
-add_executable(${CMAKE_PROJECT_NAME}
+add_executable(${PROJECT_NAME}
         main.cpp
         src/tests/test.cpp
+        src/tests/bytecode_test.cpp
         src/common/utils.cpp
         src/filereader/reader.cpp
         src/lexer/lexer.cpp
@@ -16,7 +17,13 @@ add_executable(${CMAKE_PROJECT_NAME}
         src/sema/analyzer.cpp
         src/lexer/maps.cpp
         src/mir/translator.cpp
-        src/codegen/generator.cpp
+        src/codegen/native/generator.cpp
+        src/codegen/bytecode/generator.cpp
+)
+
+target_compile_definitions(${PROJECT_NAME}
+    PRIVATE
+        BAO_VERSION=1
 )
 
 # ICU stuff
@@ -24,7 +31,7 @@ add_executable(${CMAKE_PROJECT_NAME}
 find_package(ICU REQUIRED COMPONENTS i18n uc)
 
 # Link libraries
-target_link_libraries(${CMAKE_PROJECT_NAME}
+target_link_libraries(${PROJECT_NAME}
     PRIVATE ICU::i18n ICU::uc
 )
 
@@ -50,10 +57,10 @@ message(STATUS "Using LLVMConfig.cmake in: ${LLVM_CMAKE_DIR}")
 message(STATUS "LLVM include dirs: ${LLVM_INCLUDE_DIRS}")
 message(STATUS "LLVM library dirs: ${LLVM_LIBRARY_DIRS}")
 include_directories(${LLVM_INCLUDE_DIRS})
-target_include_directories(baoc PRIVATE ${LLVM_INCLUDE_DIRS})
+target_include_directories(${PROJECT_NAME} PRIVATE ${LLVM_INCLUDE_DIRS})
 add_definitions(${LLVM_DEFINITIONS})
 # Map stuff
-llvm_map_components_to_libraries(LLVM_LIBS
+llvm_map_components_to_libnames(LLVM_LIBS
     core
     support
     irreader 
@@ -68,9 +75,9 @@ llvm_map_components_to_libraries(LLVM_LIBS
     native
 )
 # Link the damn library
-target_link_libraries(baoc PRIVATE ${LLVM_LIBS})
+target_link_libraries(${PROJECT_NAME} PRIVATE ${LLVM_LIBS})
 
 # Get header files
-target_include_directories(${CMAKE_PROJECT_NAME}
+target_include_directories(${PROJECT_NAME}
     PRIVATE include
 )
