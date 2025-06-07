@@ -55,7 +55,8 @@ void llvmTest();
 
 // Main test function
 int test(int argc, char* argv[]) {
-    compilerTest();
+    mirTest();
+    bytecode_test();
     return 0;
 }
 

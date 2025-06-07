@@ -5,13 +5,19 @@
 typedef uint8_t BYTE;
 
 namespace bao::bytecode {
-    enum class ConstTag : BYTE {
-        N32,
-        N64,
-        Z32,
-        Z64,
-        R32,
-        R64
+    enum ConstTag : BYTE {
+        N32 = 0x00,
+        N64 = 0x01,
+        Z32 = 0x02,
+        Z64 = 0x03,
+        R32 = 0x04,
+        R64 = 0x05,
+    };
+
+    enum OpTag : BYTE {
+        FUNC_DECL = 0x00,
+        FUNC_END = 0x01,
+        RETURN = 0x02,
     };
 }
 

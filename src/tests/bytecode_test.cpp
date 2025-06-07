@@ -1,6 +1,7 @@
 #include <bao/tests/test.h>
 #include <fstream>
 #include <iostream>
+#include <cstdint>
 
 typedef uint8_t BYTE;
 

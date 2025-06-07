@@ -7,18 +7,19 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Add source files
 add_executable(${PROJECT_NAME}
-        main.cpp
-        src/tests/test.cpp
-        src/tests/bytecode_test.cpp
-        src/common/utils.cpp
-        src/filereader/reader.cpp
-        src/lexer/lexer.cpp
-        src/parser/parser.cpp
-        src/sema/analyzer.cpp
-        src/lexer/maps.cpp
-        src/mir/translator.cpp
-        src/codegen/native/generator.cpp
-        src/codegen/bytecode/generator.cpp
+    main.cpp
+    src/tests/test.cpp
+    src/tests/bytecode_test.cpp
+    src/common/utils.cpp
+    src/filereader/reader.cpp
+    src/lexer/lexer.cpp
+    src/parser/parser.cpp
+    src/sema/analyzer.cpp
+    src/lexer/maps.cpp
+    src/mir/translator.cpp
+    src/codegen/native/generator.cpp
+    src/codegen/bytecode/generator.cpp
+    src/codegen/bytecode/constpool.cpp
 )
 
 target_compile_definitions(${PROJECT_NAME}

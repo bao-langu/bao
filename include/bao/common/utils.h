@@ -230,6 +230,30 @@ namespace bao::utils {
     bool is_signed(Type* type);
 
     bool is_float(Type* type);
+
+    class Logger {
+    public:
+        static void info(
+            std::string info, 
+            std::string file, 
+            std::string func, 
+            int line
+        );
+
+        static void warning(
+            std::string warning, 
+            std::string file, 
+            std::string func, 
+            int line
+        );
+    };
+
+    typedef uint8_t BYTE;
+
+    std::vector<BYTE> convert_to_bytes(auto& value);
 }
+
+#define LOG_INFO(msg) bao::utils::Logger::info(msg, __FILE__, __func__, __LINE__);
+#define LOG_WARNING(msg) bao::utils::Logger::warning(msg, __FILE__, __func__, __LINE__);
 
 #endif //UTILS_H

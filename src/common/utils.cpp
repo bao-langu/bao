@@ -649,3 +649,38 @@ bao::utils :: is_float(
     }
     return false;
 }
+
+void
+bao::utils::Logger::info(
+    std::string info, 
+    std::string file, 
+    std::string func, 
+    int line
+) {
+    std::cout << "[INFO] " << file << " in " << func << ":" << line << std::endl;
+}
+
+void
+bao::utils::Logger::warning(
+    std::string warning, 
+    std::string file, 
+    std::string func, 
+    int line
+) {
+    std::cout << "[WARNING] " << file << " in " << func << ":" << line << std::endl;
+}
+
+// Helper
+auto
+bao::utils::convert_to_bytes(
+    auto& value
+) -> std::vector<BYTE>  {
+    std::vector<BYTE> temp;
+    size_t size = sizeof(value);
+    for (int i = 0; i < size; i++) {
+        temp.push_back(
+            (value >> (8 * (size - 1) - i * 8)) & 0xFF
+        );
+    }
+    return temp;
+}

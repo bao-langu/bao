@@ -1,60 +1,47 @@
-#ifndef BYTECODE_CONSTPOOL_H
-#define BYTECODE_CONSTPOOL_H
+#ifndef CONSTPOOL_H
+#define CONSTPOOL_H
 
-#include <bao/codegen/bytecode/tags.h>
-#include <string>
-#include <vector>
 #include <variant>
+#include <cstdint>
+#include <vector>
 #include <unordered_map>
+#include <string>
+
+typedef uint8_t BYTE;
 
 namespace bao::bytecode {
-    struct ConstValue {
-        bao::bytecode::ConstTag tag;
-        std::variant<uint32_t, uint64_t, int32_t, int64_t, float, double, std::string> value;
+    struct PoolEntry {
+        std::variant<uint32_t, int32_t, uint64_t, int64_t, float, double> value;
 
-        bool operator==(const ConstValue& other) const {
-            return this->tag == other.tag && this->value == other.value;
+        bool operator==(const PoolEntry& other) {
+            return this->value == other.value;
         }
     };
 }
 
 namespace std {
     template<>
-    struct hash<bao::bytecode::ConstValue> {
-        size_t operator()(const bao::bytecode::ConstValue& cv) const {
-            size_t h1 = std::hash<int>()(static_cast<int>(cv.tag));
-            size_t h2 = 
-                std::visit(
-                    [](auto&& v) { 
-                        return std::hash<std::decay_t<decltype(v)>>()(v); 
-                    }, 
-                    cv.value
-                );
-            return h1 ^ (h2 << 1);
+    struct hash<bao::bytecode::PoolEntry> {
+        std::size_t operator()(const bao::bytecode::PoolEntry& p) const {
+            return std::visit([](const auto& v) -> std::size_t {
+                return std::hash<std::decay_t<decltype(v)>>{}(v);
+            }, p.value);
         }
     };
 }
 
 namespace bao::bytecode {
     class ConstPool {
-    public:
-        int getOrAdd(ConstValue value) {
-            auto it = indexMap.find(value);
-            if (it != indexMap.end()) {
-                return it->second;
-            }
-            int index = pool.size();
-            pool.push_back(value);
-            indexMap[value] = index;
-            return index;
-        }
-
-        const std::vector<ConstValue>& getAll() const {
-            return pool;
-        }
     private:
-        std::vector<ConstValue> pool;
-        std::unordered_map<ConstValue, int> indexMap;
+        std::vector<std::vector<BYTE>> bytecode;
+        std::unordered_map<PoolEntry, int> map;
+        int index;
+    public:
+        ConstPool();
+        uint16_t insert_const(auto& value);
+        void insert_type(auto& value);
+        void look_up(std::string value);
+        std::vector<BYTE> get_bytecode();
     };
 }
 
